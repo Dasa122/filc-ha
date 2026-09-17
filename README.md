@@ -150,6 +150,17 @@ Prefer automations? The same entities drive them — see
 for several phones) and
 [`examples/automation_in_lesson_dnd.yaml`](examples/automation_in_lesson_dnd.yaml).
 
+### See it inside the integration
+
+- **Sensors / entities** — *Settings → Devices & Services → Filc → click the class*. Every entity
+  (`current_lesson`, `next_lesson`, the two timestamp countdown sensors, `in_lesson`, the calendar
+  and the button) is listed there, under one device per class.
+- **Test live actions button** — press `button.filc_<class>_test_live_actions` to send the *current*
+  live action to the selected phone and to the Home Assistant notification area. Handy to verify
+  the phone target and the message text without waiting for a lesson.
+- **Download diagnostics** — *Filc → ⋮ → Download diagnostics* returns the resolved current/next
+  lesson, counts and the active timetable (the API key is redacted).
+
 ## Troubleshooting
 
 - **`cannot_connect`** — the public server may be down; check <https://filc.petrik.hu/api/ping>.

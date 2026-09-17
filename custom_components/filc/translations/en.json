@@ -72,6 +72,11 @@
       "in_lesson": {
         "name": "In lesson"
       }
+    },
+    "button": {
+      "test_live_actions": {
+        "name": "Test live actions"
+      }
     }
   }
 }

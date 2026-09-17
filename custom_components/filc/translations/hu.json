@@ -72,6 +72,11 @@
       "in_lesson": {
         "name": "Órán van"
       }
+    },
+    "button": {
+      "test_live_actions": {
+        "name": "Élő állapot teszt"
+      }
     }
   }
 }

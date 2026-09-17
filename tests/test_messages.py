@@ -76,3 +76,37 @@ def test_subject_short_fallback():
     )
     _title, message = messages.reminder(occ, 5, hu=True)
     assert "Ofő" in message
+
+
+def test_live_state_in_lesson_hu():
+    occ = _occ()
+    notifier = messages.live_state(occ, occ, dt.date(2026, 9, 21), hu=True)
+    title, message = notifier
+    assert title == "Filc – élő állapot"
+    assert message.startswith("ÓRA: Digitális kultúra · 📍 A118")
+    assert "vége 11:35" in message
+
+
+def test_live_state_break_hu():
+    title, message = messages.live_state(None, _occ(), dt.date(2026, 9, 21), hu=True)
+    assert title == "Filc – élő állapot"
+    assert message.startswith("SZÜNET · következő: Digitális kultúra")
+    assert "10:50" in message
+
+
+def test_live_state_no_more_today_hu():
+    title, message = messages.live_state(None, _occ(), dt.date(2026, 9, 22), hu=True)
+    assert message.startswith("NINCS TÖBB ÓRA")
+    assert "2026-09-21" in message
+
+
+def test_live_state_none_hu():
+    title, message = messages.live_state(None, None, dt.date(2026, 9, 21), hu=True)
+    assert message == "NINCS ÓRA"
+
+
+def test_live_state_en():
+    occ = _occ()
+    title, message = messages.live_state(occ, occ, dt.date(2026, 9, 21), hu=False)
+    assert title == "Filc – live status"
+    assert message.startswith("IN LESSON: Digitális kultúra")
