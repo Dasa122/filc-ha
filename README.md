@@ -159,9 +159,10 @@ for several phones) and
   live action to the selected phone and to the Home Assistant notification area. Handy to verify
   the phone target and the message text without waiting for a lesson.
   Pressing it starts a **Live Activity** (iOS) / **Live Update** (Android) on the
-  selected phone: the card stays on the Lock Screen / Dynamic Island with a live
-  on-device countdown to the end of the current lesson (or to the next lesson during
-  a break) and a progress bar. It needs a phone selected in *Configure → Notification
+  selected phone: the card stays on the Lock Screen / Dynamic Island. In a lesson it
+  shows the current subject, its room and the end time with a live progress bar and a
+  countdown to the end; during a break it reads as a break, counts down to when the
+  break ends and shows the next lesson with its room. It needs a phone selected in *Configure → Notification
   phone*; without one the button only posts to the Home Assistant notification area.
   The activity is identified by the tag `filc_<class>`; sending
   `{"message": "clear_notification", "data": {"tag": "filc_<class>"}}` to the same

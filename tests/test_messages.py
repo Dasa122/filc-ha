@@ -117,7 +117,7 @@ def test_live_activity_in_lesson():
     now = dt.datetime(2026, 9, 21, 11, 0, tzinfo=TZ)
     payload = messages.live_activity(occ, occ, now, hu=True)
     assert payload["title"] == "Filc – óra"
-    assert payload["message"].startswith("Digitális kultúra")
+    assert payload["message"] == "Digitális kultúra · 📍 A118 · vége 11:35"
     assert payload["chronometer"] is True
     assert payload["when_relative"] is True
     assert payload["when"] == 2100
@@ -130,8 +130,9 @@ def test_live_activity_break():
     now = dt.datetime(2026, 9, 21, 10, 0, tzinfo=TZ)
     payload = messages.live_activity(None, occ, now, hu=True)
     assert payload["title"] == "Filc – szünet"
-    assert payload["message"].startswith("Következő: Digitális kultúra")
+    assert payload["message"] == "Szünet vége 10:50 · Digitális kultúra · 📍 A118"
     assert payload["when"] == 3000
+    assert payload["chronometer"] is True
     assert "progress" not in payload
 
 
@@ -141,6 +142,7 @@ def test_live_activity_no_more_today():
     payload = messages.live_activity(None, occ, now, hu=True)
     assert "chronometer" not in payload
     assert "Nincs több óra" in payload["message"]
+    assert "📍 A118" in payload["message"]
 
 
 def test_live_activity_none():
@@ -148,3 +150,11 @@ def test_live_activity_none():
         None, None, dt.datetime(2026, 9, 21, 8, 0, tzinfo=TZ), hu=True
     )
     assert payload["message"] == "Nincs óra"
+
+
+def test_live_activity_break_en():
+    occ = _occ()
+    now = dt.datetime(2026, 9, 21, 10, 0, tzinfo=TZ)
+    payload = messages.live_activity(None, occ, now, hu=False)
+    assert payload["title"] == "Filc – break"
+    assert payload["message"] == "Break ends 10:50 · Digitális kultúra · 📍 A118"

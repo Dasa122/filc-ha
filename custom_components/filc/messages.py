@@ -68,6 +68,8 @@ def live_activity(current, upcoming, now, hu: bool = True) -> dict:
     """Payload fields for a Live Activity / Live Update (no HA imports).
 
     `now` must be a timezone-aware datetime in the school timezone.
+    `chronometer` + `when` + `when_relative` make the timer tick on the device
+    with no further pushes.
     """
     if current is not None:
         subject = _subject(current)
@@ -75,9 +77,15 @@ def live_activity(current, upcoming, now, hu: bool = True) -> dict:
         remaining = max(int((current.end - now).total_seconds()), 1)
         total = max(int((current.end - current.start).total_seconds()), 1)
         elapsed = max(int((now - current.start).total_seconds()), 0)
+        if hu:
+            title = "Filc – óra"
+            message = f"{subject}{room} · vége {current.end:%H:%M}"
+        else:
+            title = "Filc – lesson"
+            message = f"{subject}{room} · ends {current.end:%H:%M}"
         return {
-            "title": "Filc – óra" if hu else "Filc – lesson",
-            "message": f"{subject}{room}",
+            "title": title,
+            "message": message,
             "chronometer": True,
             "when": remaining,
             "when_relative": True,
@@ -89,9 +97,15 @@ def live_activity(current, upcoming, now, hu: bool = True) -> dict:
         subject = _subject(upcoming)
         room = f" · 📍 {upcoming.room}" if upcoming.room else ""
         until = max(int((upcoming.start - now).total_seconds()), 1)
+        if hu:
+            title = "Filc – szünet"
+            message = f"Szünet vége {upcoming.start:%H:%M} · {subject}{room}"
+        else:
+            title = "Filc – break"
+            message = f"Break ends {upcoming.start:%H:%M} · {subject}{room}"
         return {
-            "title": "Filc – szünet" if hu else "Filc – break",
-            "message": f"Következő: {subject}{room}" if hu else f"Next: {subject}{room}",
+            "title": title,
+            "message": message,
             "chronometer": True,
             "when": until,
             "when_relative": True,
@@ -99,16 +113,17 @@ def live_activity(current, upcoming, now, hu: bool = True) -> dict:
 
     if upcoming is not None:
         subject = _subject(upcoming)
-        return {
-            "title": "Filc",
-            "message": (
-                f"Nincs több óra ma · következő: {subject} · {upcoming.date} {upcoming.start:%H:%M}"
-                if hu
-                else f"No more today · next: {subject} · {upcoming.date} {upcoming.start:%H:%M}"
-            ),
-        }
+        room = f" · 📍 {upcoming.room}" if upcoming.room else ""
+        if hu:
+            message = (
+                f"Nincs több óra ma · {subject}{room} · "
+                f"{upcoming.date} {upcoming.start:%H:%M}"
+            )
+        else:
+            message = (
+                f"No more today · {subject}{room} · "
+                f"{upcoming.date} {upcoming.start:%H:%M}"
+            )
+        return {"title": "Filc", "message": message}
 
-    return {
-        "title": "Filc",
-        "message": "Nincs óra" if hu else "No lessons",
-    }
+    return {"title": "Filc", "message": "Nincs óra" if hu else "No lessons"}
