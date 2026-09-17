@@ -152,7 +152,7 @@ def simulate(day, occurrences, lead, on_break, hu) -> None:
 
 def watch(lessons, selected, moved, substitutions, interval, hu) -> int:
     """Print the live state every `interval` seconds until interrupted."""
-    print(f"Watching the live state every {interval}s (Ctrl-C to stop)...\n")
+    print(f"Watching the live state every {interval}s (Ctrl-C to stop)...\n", flush=True)
     try:
         while True:
             now = schedule.now()
@@ -173,10 +173,10 @@ def watch(lessons, selected, moved, substitutions, interval, hu) -> int:
                 state = f"NO MORE TODAY - next: {subject} on {upcoming.date} at {upcoming.start:%H:%M}"
             else:
                 state = "NO LESSONS"
-            print(f"{now:%H:%M:%S}  {state}")
+            print(f"{now:%H:%M:%S}  {state}", flush=True)
             time.sleep(interval)
     except KeyboardInterrupt:
-        print("\nstopped.")
+        print("\nstopped.", flush=True)
     return 0
 
 
