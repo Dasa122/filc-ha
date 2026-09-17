@@ -110,3 +110,41 @@ def test_live_state_en():
     title, message = messages.live_state(occ, occ, dt.date(2026, 9, 21), hu=False)
     assert title == "Filc – live status"
     assert message.startswith("IN LESSON: Digitális kultúra")
+
+
+def test_live_activity_in_lesson():
+    occ = _occ()
+    now = dt.datetime(2026, 9, 21, 11, 0, tzinfo=TZ)
+    payload = messages.live_activity(occ, occ, now, hu=True)
+    assert payload["title"] == "Filc – óra"
+    assert payload["message"].startswith("Digitális kultúra")
+    assert payload["chronometer"] is True
+    assert payload["when_relative"] is True
+    assert payload["when"] == 2100
+    assert payload["progress"] == 600
+    assert payload["progress_max"] == 2700
+
+
+def test_live_activity_break():
+    occ = _occ()
+    now = dt.datetime(2026, 9, 21, 10, 0, tzinfo=TZ)
+    payload = messages.live_activity(None, occ, now, hu=True)
+    assert payload["title"] == "Filc – szünet"
+    assert payload["message"].startswith("Következő: Digitális kultúra")
+    assert payload["when"] == 3000
+    assert "progress" not in payload
+
+
+def test_live_activity_no_more_today():
+    occ = _occ()
+    now = dt.datetime(2026, 9, 22, 8, 0, tzinfo=TZ)
+    payload = messages.live_activity(None, occ, now, hu=True)
+    assert "chronometer" not in payload
+    assert "Nincs több óra" in payload["message"]
+
+
+def test_live_activity_none():
+    payload = messages.live_activity(
+        None, None, dt.datetime(2026, 9, 21, 8, 0, tzinfo=TZ), hu=True
+    )
+    assert payload["message"] == "Nincs óra"

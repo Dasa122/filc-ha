@@ -11,7 +11,7 @@ from . import schedule
 from .const import CONF_NOTIFY_SERVICE
 from .coordinator import FilcDataUpdateCoordinator
 from .entity import FilcEntity
-from .messages import live_state
+from .messages import live_activity, live_state
 
 
 async def async_setup_entry(
@@ -38,21 +38,42 @@ class FilcTestLiveActionsButton(FilcEntity, ButtonEntity):
     async def async_press(self) -> None:
         data = {**self._entry.data, **self._entry.options}
         hu = (self.hass.config.language or "en").lower().startswith("hu")
-        title, message = live_state(
-            self.coordinator.current(),
-            self.coordinator.upcoming(),
-            schedule.today(),
-            hu,
-        )
+        current = self.coordinator.current()
+        upcoming = self.coordinator.upcoming()
+        now = schedule.now()
+
+        title, message = live_state(current, upcoming, now.date(), hu)
 
         service = data.get(CONF_NOTIFY_SERVICE)
         if service:
+            payload = live_activity(current, upcoming, now, hu)
+            notify_data: dict = {
+                "tag": f"filc_{self.coordinator.cohort_id}",
+                "live_update": True,
+                "notification_icon": "mdi:school",
+                "notification_icon_color": "#15ba81",
+                "color": "#15ba81",
+            }
+            for key in (
+                "chronometer",
+                "when",
+                "when_relative",
+                "progress",
+                "progress_max",
+            ):
+                if key in payload:
+                    notify_data[key] = payload[key]
             await self.hass.services.async_call(
                 "notify",
                 service,
-                {"title": title, "message": message},
+                {
+                    "title": payload["title"],
+                    "message": payload["message"],
+                    "data": notify_data,
+                },
                 blocking=False,
             )
+
         await self.hass.services.async_call(
             "persistent_notification",
             "create",

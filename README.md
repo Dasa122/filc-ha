@@ -158,6 +158,14 @@ for several phones) and
 - **Test live actions button** — press `button.filc_<class>_test_live_actions` to send the *current*
   live action to the selected phone and to the Home Assistant notification area. Handy to verify
   the phone target and the message text without waiting for a lesson.
+  Pressing it starts a **Live Activity** (iOS) / **Live Update** (Android) on the
+  selected phone: the card stays on the Lock Screen / Dynamic Island with a live
+  on-device countdown to the end of the current lesson (or to the next lesson during
+  a break) and a progress bar. It needs a phone selected in *Configure → Notification
+  phone*; without one the button only posts to the Home Assistant notification area.
+  The activity is identified by the tag `filc_<class>`; sending
+  `{"message": "clear_notification", "data": {"tag": "filc_<class>"}}` to the same
+  phone ends it.
 - **Download diagnostics** — *Filc → ⋮ → Download diagnostics* returns the resolved current/next
   lesson, counts and the active timetable (the API key is redacted).
 

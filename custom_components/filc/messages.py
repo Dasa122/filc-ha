@@ -62,3 +62,53 @@ def live_state(current, upcoming, today, hu: bool = True) -> tuple[str, str]:
     if hu:
         return ("Filc – élő állapot", "NINCS ÓRA")
     return ("Filc – live status", "NO LESSONS")
+
+
+def live_activity(current, upcoming, now, hu: bool = True) -> dict:
+    """Payload fields for a Live Activity / Live Update (no HA imports).
+
+    `now` must be a timezone-aware datetime in the school timezone.
+    """
+    if current is not None:
+        subject = _subject(current)
+        room = f" · 📍 {current.room}" if current.room else ""
+        remaining = max(int((current.end - now).total_seconds()), 1)
+        total = max(int((current.end - current.start).total_seconds()), 1)
+        elapsed = max(int((now - current.start).total_seconds()), 0)
+        return {
+            "title": "Filc – óra" if hu else "Filc – lesson",
+            "message": f"{subject}{room}",
+            "chronometer": True,
+            "when": remaining,
+            "when_relative": True,
+            "progress": min(elapsed, total),
+            "progress_max": total,
+        }
+
+    if upcoming is not None and upcoming.date == now.date():
+        subject = _subject(upcoming)
+        room = f" · 📍 {upcoming.room}" if upcoming.room else ""
+        until = max(int((upcoming.start - now).total_seconds()), 1)
+        return {
+            "title": "Filc – szünet" if hu else "Filc – break",
+            "message": f"Következő: {subject}{room}" if hu else f"Next: {subject}{room}",
+            "chronometer": True,
+            "when": until,
+            "when_relative": True,
+        }
+
+    if upcoming is not None:
+        subject = _subject(upcoming)
+        return {
+            "title": "Filc",
+            "message": (
+                f"Nincs több óra ma · következő: {subject} · {upcoming.date} {upcoming.start:%H:%M}"
+                if hu
+                else f"No more today · next: {subject} · {upcoming.date} {upcoming.start:%H:%M}"
+            ),
+        }
+
+    return {
+        "title": "Filc",
+        "message": "Nincs óra" if hu else "No lessons",
+    }
