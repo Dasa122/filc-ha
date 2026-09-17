@@ -47,22 +47,28 @@
   },
   "entity": {
     "calendar": {
-      "name": "Timetable"
+      "calendar": {
+        "name": "Timetable"
+      }
     },
-    "current_lesson": {
-      "name": "Current lesson"
+    "sensor": {
+      "current_lesson": {
+        "name": "Current lesson"
+      },
+      "next_lesson": {
+        "name": "Next lesson"
+      },
+      "current_lesson_end": {
+        "name": "Current lesson end"
+      },
+      "next_lesson_start": {
+        "name": "Next lesson start"
+      }
     },
-    "next_lesson": {
-      "name": "Next lesson"
-    },
-    "current_lesson_end": {
-      "name": "Current lesson end"
-    },
-    "next_lesson_start": {
-      "name": "Next lesson start"
-    },
-    "in_lesson": {
-      "name": "In lesson"
+    "binary_sensor": {
+      "in_lesson": {
+        "name": "In lesson"
+      }
     }
   }
 }

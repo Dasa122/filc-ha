@@ -1,11 +1,11 @@
 {
   "domain": "filc",
   "name": "Filc",
-  "codeowners": ["@dasa122"],
+  "codeowners": ["@Dasa122"],
   "config_flow": true,
-  "documentation": "https://github.com/dasa122/filc-ha",
-  "issue_tracker": "https://github.com/dasa122/filc-ha/issues",
+  "documentation": "https://github.com/Dasa122/filc-ha",
   "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/Dasa122/filc-ha/issues",
   "requirements": [],
   "version": "0.1.0"
 }

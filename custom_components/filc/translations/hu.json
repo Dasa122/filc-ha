@@ -47,22 +47,28 @@
   },
   "entity": {
     "calendar": {
-      "name": "Órarend"
+      "calendar": {
+        "name": "Órarend"
+      }
     },
-    "current_lesson": {
-      "name": "Aktuális óra"
+    "sensor": {
+      "current_lesson": {
+        "name": "Aktuális óra"
+      },
+      "next_lesson": {
+        "name": "Következő óra"
+      },
+      "current_lesson_end": {
+        "name": "Aktuális óra vége"
+      },
+      "next_lesson_start": {
+        "name": "Következő óra kezdete"
+      }
     },
-    "next_lesson": {
-      "name": "Következő óra"
-    },
-    "current_lesson_end": {
-      "name": "Aktuális óra vége"
-    },
-    "next_lesson_start": {
-      "name": "Következő óra kezdete"
-    },
-    "in_lesson": {
-      "name": "Órán van"
+    "binary_sensor": {
+      "in_lesson": {
+        "name": "Órán van"
+      }
     }
   }
 }
