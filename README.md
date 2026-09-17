@@ -173,8 +173,16 @@ current/next/break state — no Home Assistant required:
 python tools/live_check.py --class 9.A --groups info1,tesi2                        # right now
 python tools/live_check.py --class 9.A --groups info1,tesi2 --at "2026-09-17 09:50" # simulate a break
 python tools/live_check.py --class 9.A --groups info1,tesi2 --date 2026-09-18       # a substitution day
+python tools/live_check.py --class 9.A --groups info1,tesi2 --simulate             # replay a whole day (starts, breaks, notifications)
+python tools/live_check.py --class 9.A --groups info1,tesi2 --watch --interval 15   # live monitor, refreshes every 15s
 python tools/live_check.py --class 9.A --api-key "<key>"                            # use your selected groups
 ```
+
+`--simulate` prints the exact timeline the integration produces: each lesson start,
+each break (with the next subject + room), and the notification text it would send
+(`--lead` minutes before the lesson, `--no-break` to skip break notices, `--lang en`
+for English). `--watch` shows the live state until you press Ctrl-C — leave it
+running during a real school day to see it switch between `IN LESSON` and `BREAK`.
 
 The schedule maths (`schedule.py`) is deliberately free of Home Assistant imports so
 it can be tested in isolation.

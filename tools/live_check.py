@@ -18,6 +18,7 @@ import argparse
 import calendar  # noqa: F401 - cache stdlib calendar before the component dir shadows it
 import json
 import sys
+import time
 import urllib.parse
 import urllib.request
 from datetime import date, datetime, timedelta
@@ -27,6 +28,7 @@ from zoneinfo import ZoneInfo
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "custom_components" / "filc"))
 
+import messages  # noqa: E402
 import schedule  # noqa: E402
 from models import Lesson  # noqa: E402
 
@@ -102,6 +104,82 @@ def minutes(delta: timedelta) -> str:
     return f"{total} perc" if total >= 0 else f"{-total} perccel ezelőtt"
 
 
+def simulate(day, occurrences, lead, on_break, hu) -> None:
+    """Replay a day: lesson starts, breaks and the notifications that would fire."""
+    print(
+        f"\n--- simulation for {day} "
+        f"(reminder {lead} min before, break notices {'on' if on_break else 'off'}) ---"
+    )
+    if not occurrences:
+        print("  (no lessons)")
+        return
+
+    events = []
+    for occ in occurrences:
+        if occ.cancelled:
+            events.append((occ.start, "cancel", occ))
+            continue
+        if lead > 0:
+            events.append((occ.start - timedelta(minutes=lead), "remind", occ))
+        events.append((occ.start, "start", occ))
+        events.append((occ.end, "end", occ))
+    events.sort(key=lambda item: item[0])
+
+    for when, kind, occ in events:
+        subject = occ.lesson.subject or occ.lesson.subject_short or "?"
+        if kind == "cancel":
+            print(f"  {when:%H:%M}  ELMARAD: {subject}")
+        elif kind == "remind":
+            title, message = messages.reminder(occ, lead, hu)
+            print(f"  {when:%H:%M}  [notification] {title} - {message}")
+        elif kind == "start":
+            room = f" - {occ.room}" if occ.room else ""
+            teacher = f" - {occ.teacher}" if occ.teacher else ""
+            print(f"  {when:%H:%M}  IN LESSON: {subject}{room}{teacher}")
+        else:
+            upcoming = next(
+                (o for o in occurrences if not o.cancelled and o.start > when), None
+            )
+            if upcoming is not None and upcoming.date == day:
+                if on_break:
+                    title, message = messages.break_message(upcoming, hu)
+                    print(f"  {when:%H:%M}  [notification] {title} - {message}")
+                else:
+                    print(f"  {when:%H:%M}  BREAK")
+            else:
+                print(f"  {when:%H:%M}  BREAK - no more lessons today")
+
+
+def watch(lessons, selected, moved, substitutions, interval, hu) -> int:
+    """Print the live state every `interval` seconds until interrupted."""
+    print(f"Watching the live state every {interval}s (Ctrl-C to stop)...\n")
+    try:
+        while True:
+            now = schedule.now()
+            current = schedule.current_occurrence(
+                now, lessons, selected, moved, substitutions
+            )
+            upcoming = schedule.next_occurrence(
+                now, lessons, selected, moved, substitutions
+            )
+            if current is not None:
+                subject = current.lesson.subject or current.lesson.subject_short or "?"
+                state = f"IN LESSON: {subject} ({current.room or '-'}) - ends {current.end:%H:%M}"
+            elif upcoming is not None and upcoming.date == now.date():
+                subject = upcoming.lesson.subject or upcoming.lesson.subject_short or "?"
+                state = f"BREAK - next: {subject} ({upcoming.room or '-'}) at {upcoming.start:%H:%M}"
+            elif upcoming is not None:
+                subject = upcoming.lesson.subject or upcoming.lesson.subject_short or "?"
+                state = f"NO MORE TODAY - next: {subject} on {upcoming.date} at {upcoming.start:%H:%M}"
+            else:
+                state = "NO LESSONS"
+            print(f"{now:%H:%M:%S}  {state}")
+            time.sleep(interval)
+    except KeyboardInterrupt:
+        print("\nstopped.")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Live schedule check")
     parser.add_argument("--url", default="https://filc.petrik.hu")
@@ -110,6 +188,20 @@ def main() -> int:
     parser.add_argument("--api-key", default="", help="optional API key (uses your selected groups)")
     parser.add_argument("--at", default="", help='simulate a moment: "YYYY-MM-DD HH:MM"')
     parser.add_argument("--date", default="", help="print a specific day: YYYY-MM-DD")
+    parser.add_argument(
+        "--simulate",
+        action="store_true",
+        help="replay the whole day: lesson starts, breaks and the notifications that would fire",
+    )
+    parser.add_argument(
+        "--watch",
+        action="store_true",
+        help="print the live state every --interval seconds until Ctrl-C",
+    )
+    parser.add_argument("--lead", type=int, default=5, help="minutes before a lesson the reminder fires (simulate)")
+    parser.add_argument("--no-break", action="store_true", help="do not send break notices (simulate)")
+    parser.add_argument("--interval", type=int, default=30, help="seconds between updates in --watch mode")
+    parser.add_argument("--lang", choices=["hu", "en"], default="hu", help="notification language (simulate)")
     args = parser.parse_args()
 
     timetable, cohort = resolve_cohort(args.url, args.klass)
@@ -135,6 +227,11 @@ def main() -> int:
     )
     day = date.fromisoformat(args.date) if args.date else now.date()
 
+    if args.watch:
+        return watch(
+            lessons, selected, moved, substitutions, args.interval, args.lang == "hu"
+        )
+
     occurrences = schedule.occurrences_for_date(day, lessons, selected, moved, substitutions)
 
     chosen = ", ".join(sorted(g["name"] for g in groups if g["id"] in selected))
@@ -148,6 +245,10 @@ def main() -> int:
     for occ in occurrences:
         marker = "   <== NOW" if now.date() == day and occ.start <= now < occ.end else ""
         print("  " + fmt_occurrence(occ) + marker)
+
+    if args.simulate:
+        simulate(day, occurrences, args.lead, not args.no_break, args.lang == "hu")
+        return 0
 
     if now.date() == day:
         current = schedule.current_occurrence(now, lessons, selected, moved, substitutions)

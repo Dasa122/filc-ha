@@ -19,6 +19,7 @@ from homeassistant.helpers.event import async_track_point_in_time
 
 from . import schedule
 from .coordinator import FilcDataUpdateCoordinator
+from .messages import break_message, reminder
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -115,16 +116,8 @@ class FilcNotifier:
         upcoming = self.coordinator.upcoming()
         if upcoming is None or upcoming.lesson.id != lesson_id:
             return
-        subject = upcoming.lesson.subject or upcoming.lesson.subject_short or "Óra"
-        room = f" · 📍 {upcoming.room}" if upcoming.room else ""
-        teacher = f" · {upcoming.teacher}" if upcoming.teacher else ""
         minutes = int(self._lead.total_seconds() // 60)
-        if self._hu:
-            title = f"Következő óra {minutes} perc múlva"
-            message = f"{subject}{room}{teacher} · kezdés {upcoming.start:%H:%M}"
-        else:
-            title = f"Next lesson in {minutes} minutes"
-            message = f"{subject}{room}{teacher} · starts {upcoming.start:%H:%M}"
+        title, message = reminder(upcoming, minutes, self._hu)
         await self._send(title, message)
 
     async def _notify_break(self) -> None:
@@ -132,14 +125,7 @@ class FilcNotifier:
         upcoming = self.coordinator.upcoming()
         if upcoming is None or upcoming.date != now.date():
             return
-        subject = upcoming.lesson.subject or upcoming.lesson.subject_short or "Óra"
-        room = f" · 📍 {upcoming.room}" if upcoming.room else ""
-        if self._hu:
-            title = "Szünet"
-            message = f"Következő: {subject}{room} · {upcoming.start:%H:%M}"
-        else:
-            title = "Break"
-            message = f"Next: {subject}{room} · {upcoming.start:%H:%M}"
+        title, message = break_message(upcoming, self._hu)
         await self._send(title, message)
 
     async def _send(self, title: str, message: str) -> None:
