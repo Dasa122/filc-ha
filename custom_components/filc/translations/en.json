@@ -1,0 +1,68 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Filc",
+        "description": "Connect to the Filc server. An API key is optional but lets the integration mirror the groups you picked in the Filc app.",
+        "data": {
+          "base_url": "Server URL",
+          "api_key": "API key (optional)"
+        }
+      },
+      "class": {
+        "title": "Select your class",
+        "data": {
+          "cohort_id": "Class"
+        }
+      },
+      "groups": {
+        "title": "Select your groups",
+        "description": "Pick one group per split (e.g. English, PE). Groups marked as selected in Filc are pre-chosen."
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to reach the Filc server.",
+      "invalid_auth": "The API key was rejected.",
+      "unknown": "Unexpected error."
+    },
+    "abort": {
+      "already_configured": "This class is already configured.",
+      "cannot_connect": "Failed to reach the Filc server."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Filc options",
+        "data": {
+          "cohort_id": "Class",
+          "scan_interval": "Refresh interval (seconds)"
+        }
+      },
+      "groups": {
+        "title": "Select your groups",
+        "description": "Pick one group per split (e.g. English, PE)."
+      }
+    }
+  },
+  "entity": {
+    "calendar": {
+      "name": "Timetable"
+    },
+    "current_lesson": {
+      "name": "Current lesson"
+    },
+    "next_lesson": {
+      "name": "Next lesson"
+    },
+    "current_lesson_end": {
+      "name": "Current lesson end"
+    },
+    "next_lesson_start": {
+      "name": "Next lesson start"
+    },
+    "in_lesson": {
+      "name": "In lesson"
+    }
+  }
+}

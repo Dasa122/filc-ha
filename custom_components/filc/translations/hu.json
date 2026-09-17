@@ -1,0 +1,68 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Filc",
+        "description": "Kapcsolódás a Filc szerverhez. Az API kulcs opcionális, de ezzel az integráció átveszi a Filc appban kiválasztott csoportjaidat.",
+        "data": {
+          "base_url": "Szerver URL",
+          "api_key": "API kulcs (opcionális)"
+        }
+      },
+      "class": {
+        "title": "Osztály kiválasztása",
+        "data": {
+          "cohort_id": "Osztály"
+        }
+      },
+      "groups": {
+        "title": "Csoportok kiválasztása",
+        "description": "Válassz egy csoportot minden bontáshoz (pl. angol, tesi). A Filcben kiválasztott csoportok előre bejelölve."
+      }
+    },
+    "error": {
+      "cannot_connect": "Nem sikerült elérni a Filc szervert.",
+      "invalid_auth": "Az API kulcsot elutasították.",
+      "unknown": "Váratlan hiba."
+    },
+    "abort": {
+      "already_configured": "Ez az osztály már be van állítva.",
+      "cannot_connect": "Nem sikerült elérni a Filc szervert."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Filc beállítások",
+        "data": {
+          "cohort_id": "Osztály",
+          "scan_interval": "Frissítési időköz (másodperc)"
+        }
+      },
+      "groups": {
+        "title": "Csoportok kiválasztása",
+        "description": "Válassz egy csoportot minden bontáshoz (pl. angol, tesi)."
+      }
+    }
+  },
+  "entity": {
+    "calendar": {
+      "name": "Órarend"
+    },
+    "current_lesson": {
+      "name": "Aktuális óra"
+    },
+    "next_lesson": {
+      "name": "Következő óra"
+    },
+    "current_lesson_end": {
+      "name": "Aktuális óra vége"
+    },
+    "next_lesson_start": {
+      "name": "Következő óra kezdete"
+    },
+    "in_lesson": {
+      "name": "Órán van"
+    }
+  }
+}
