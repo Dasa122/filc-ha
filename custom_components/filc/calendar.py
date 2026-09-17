@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 from homeassistant.components.calendar import CalendarEntity, CalendarEvent
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import schedule
+from .coordinator import FilcDataUpdateCoordinator
 from .entity import FilcEntity
 from .models import Occurrence
 
@@ -69,3 +73,13 @@ class FilcCalendar(FilcEntity, CalendarEntity):
             for occ in occurrences
             if occ.start < end_date and occ.end > start_date
         ]
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up the Filc calendar."""
+    coordinator: FilcDataUpdateCoordinator = entry.runtime_data
+    async_add_entities([FilcCalendar(coordinator)])

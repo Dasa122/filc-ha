@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import schedule
+from .coordinator import FilcDataUpdateCoordinator
 from .entity import FilcEntity
 
 BREAK_STATE = "Szünet"
@@ -122,3 +126,20 @@ class FilcNextLessonStartSensor(_FilcSensor):
     def native_value(self):
         upcoming = self.coordinator.upcoming()
         return upcoming.start if upcoming else None
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up the Filc sensors."""
+    coordinator: FilcDataUpdateCoordinator = entry.runtime_data
+    async_add_entities(
+        [
+            FilcCurrentLessonSensor(coordinator),
+            FilcNextLessonSensor(coordinator),
+            FilcCurrentLessonEndSensor(coordinator),
+            FilcNextLessonStartSensor(coordinator),
+        ]
+    )
