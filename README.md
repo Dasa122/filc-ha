@@ -122,6 +122,21 @@ automation:
           message: "Óra kezdődött"
 ```
 
+## Show it on a specific phone
+
+**Display (dashboard / widgets).** Each phone signs in to Home Assistant as a user and sees that user's default dashboard:
+
+- **Per-phone dashboard** — *Settings → Dashboards → open your Filc dashboard → Visibility* → restrict it to the user account that phone is signed in with. Or set the default dashboard on that user's profile (click the user → *Default dashboard*).
+- **Same dashboard on both phones** — add the cards from [`examples/mobile_dashboard.yaml`](examples/mobile_dashboard.yaml); they render identically on iOS and Android.
+- **Home-screen widgets** — add `sensor.filc_<class>_next_lesson` and the timestamp sensors to a widget on either OS. Widgets are local to that phone.
+
+**Targeted notifications.** The companion app registers one `notify.mobile_app_<device>` service per phone:
+
+- Find the exact name in **Developer Tools → Actions** (search `notify.mobile_app`) or on the phone's device page under *Settings → Devices & Services → Mobile App*.
+- Send a test: Developer Tools → Actions → `notify.mobile_app_<device>`, message `test`.
+- Pick the phone by editing one variable — see [`examples/automation_next_lesson.yaml`](examples/automation_next_lesson.yaml) (`phone_service`). For several phones use a [`notify` group](https://www.home-assistant.io/integrations/notify.group/).
+- Silence a phone during lessons with [`examples/automation_in_lesson_dnd.yaml`](examples/automation_in_lesson_dnd.yaml).
+
 ## Troubleshooting
 
 - **`cannot_connect`** — the public server may be down; check <https://filc.petrik.hu/api/ping>.
@@ -134,6 +149,18 @@ automation:
 ```bash
 python -m pytest tests/ -q          # pure-logic tests, no HA needed (needs: pip install pytest)
 python -m py_compile custom_components/filc/*.py
+```
+
+### Try the schedule logic against live data
+
+`tools/live_check.py` fetches real Filc data and prints the resolved day plus the
+current/next/break state — no Home Assistant required:
+
+```bash
+python tools/live_check.py --class 9.A --groups info1,tesi2                        # right now
+python tools/live_check.py --class 9.A --groups info1,tesi2 --at "2026-09-17 09:50" # simulate a break
+python tools/live_check.py --class 9.A --groups info1,tesi2 --date 2026-09-18       # a substitution day
+python tools/live_check.py --class 9.A --api-key "<key>"                            # use your selected groups
 ```
 
 The schedule maths (`schedule.py`) is deliberately free of Home Assistant imports so

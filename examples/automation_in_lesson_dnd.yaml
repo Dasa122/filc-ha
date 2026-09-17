@@ -1,0 +1,43 @@
+# Filc - silence ONE chosen phone while a lesson is in progress.
+#
+# The trigger is the integration's `in_lesson` binary sensor, so it works for
+# every class automatically (including breaks and substituted lessons).
+#
+# Choose the phone the same way as in automation_next_lesson.yaml: the notify
+# service name comes from the phone's device in Settings -> Devices & Services
+# -> Mobile App.
+#
+# `filc_9_a` is placeholders for your class slug.
+alias: Filc - ne zavarjanak oran
+mode: single
+variables:
+  phone_service: notify.mobile_app_gergo_iphone
+triggers:
+  - trigger: state
+    entity_id: binary_sensor.filc_9_a_in_lesson
+    to: "on"
+    id: lesson
+  - trigger: state
+    entity_id: binary_sensor.filc_9_a_in_lesson
+    to: "off"
+    id: break
+actions:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: lesson
+        sequence:
+          - action: "{{ phone_service }}"
+            data:
+              message: command_dnd
+              data:
+                command: "turn_on"
+      - conditions:
+          - condition: trigger
+            id: break
+        sequence:
+          - action: "{{ phone_service }}"
+            data:
+              message: command_dnd
+              data:
+                command: "turn_off"

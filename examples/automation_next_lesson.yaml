@@ -1,0 +1,42 @@
+# Filc - notify ONE chosen phone before the next lesson.
+#
+# How to "select the phone":
+#   1. Install the Home Assistant companion app on the phone and sign in.
+#   2. Settings -> Devices & Services -> Mobile App: the phone shows up as a
+#      device (e.g. "Gergo iPhone"). Its name becomes a notify service.
+#   3. Developer Tools -> Actions -> search "notify.mobile_app": pick the one
+#      matching your phone (e.g. notify.mobile_app_gergo_iphone).
+#   4. Put that service in `phone_service` below. To target another phone,
+#      change this single line - or use a notify group to hit several.
+#
+# Replace `filc_9_a` with your class's entity slug (see Settings -> Devices).
+alias: Filc - kovetkezo ora emlekezteto
+mode: single
+variables:
+  phone_service: notify.mobile_app_gergo_iphone
+trigger:
+  # 5 minutes before the next lesson starts.
+  # `at` accepts a timestamp sensor on current Home Assistant. If your version
+  # rejects it, replace this with the template trigger further down.
+  - platform: time
+    at: sensor.filc_9_a_next_lesson_start
+    offset: "-00:05:00"
+  # Template trigger fallback (use instead of the time trigger above):
+  # - platform: template
+  #   value_template: >-
+  #     {% set t = as_timestamp(states('sensor.filc_9_a_next_lesson_start'), 0) %}
+  #     {{ t > 0 and 240 < (t - now().timestamp()) < 300 }}
+condition:
+  - condition: template
+    value_template: >-
+      {{ states('sensor.filc_9_a_next_lesson') not in ['unknown', 'unavailable', 'none'] }}
+action:
+  - service: "{{ phone_service }}"
+    data:
+      title: "Következő óra 5 perc múlva"
+      message: >-
+        {{ states('sensor.filc_9_a_next_lesson') }}
+        {%- set room = state_attr('sensor.filc_9_a_next_lesson', 'room') %}
+        {%- if room %} · 📍 {{ room }}{% endif %}
+        {%- set teacher = state_attr('sensor.filc_9_a_next_lesson', 'teacher') %}
+        {%- if teacher %} · {{ teacher }}{% endif %}

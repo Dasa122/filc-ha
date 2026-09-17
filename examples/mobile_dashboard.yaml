@@ -1,0 +1,43 @@
+# Filc mobile dashboard (iPhone + Android).
+#
+# Paste this as a new view in your dashboard's raw configuration editor:
+#   Dashboard -> Edit -> pencil -> Raw configuration editor.
+#
+# IMPORTANT: replace `filc_9_a` in every entity id below with YOUR class's slug.
+# Find the real ids under Settings -> Devices & Services -> Filc <class>.
+# The markdown card and the timestamp entities render identically on iOS and
+# Android; timestamp entities show a live "in 23 minutes" countdown on both.
+title: Filc
+path: filc
+icon: mdi:school
+cards:
+  - type: markdown
+    content: >-
+      ## {{ states('sensor.filc_9_a_current_lesson') }}
+
+      {% set room = state_attr('sensor.filc_9_a_current_lesson', 'room') %}
+      {% set teacher = state_attr('sensor.filc_9_a_current_lesson', 'teacher') %}
+      {% if room %}📍 {{ room }}{% endif %}{% if teacher %} · {{ teacher }}{% endif %}
+      {% set end = state_attr('sensor.filc_9_a_current_lesson', 'ends_at') %}
+      {% if end %} · ⏳ {{ ((as_timestamp(end) - now().timestamp()) / 60) | round(0) }} perc{% endif %}
+
+      **Következő:** {{ states('sensor.filc_9_a_next_lesson') }}
+      {% set nroom = state_attr('sensor.filc_9_a_next_lesson', 'room') %}
+      {% set nstart = state_attr('sensor.filc_9_a_next_lesson', 'starts_at') %}
+      {% if nroom %} · 📍 {{ nroom }}{% endif %}
+      {% if nstart %} · {{ ((as_timestamp(nstart) - now().timestamp()) / 60) | round(0) }} perc{% endif %}
+
+  - type: entities
+    title: Óra
+    entities:
+      - entity: sensor.filc_9_a_current_lesson
+      - entity: sensor.filc_9_a_current_lesson_end
+        name: Aktuális óra vége
+      - entity: sensor.filc_9_a_next_lesson
+      - entity: sensor.filc_9_a_next_lesson_start
+        name: Következő óra kezdete
+      - entity: binary_sensor.filc_9_a_in_lesson
+
+  - type: calendar
+    entities:
+      - calendar.filc_9_a
