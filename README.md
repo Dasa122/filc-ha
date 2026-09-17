@@ -203,6 +203,12 @@ it can be tested in isolation.
 - Notification feed / door lock events — the API supports them, but they need an API
   key and Filc currently ships no key-management UI.
 
+## Credits
+
+The brand icon and logo are the official Filc assets from the
+[filcdev/filc](https://github.com/filcdev/filc) project (AGPL-3.0), used here to
+identify the service this integration connects to.
+
 ## License
 
 MIT © 2026 dasa122
