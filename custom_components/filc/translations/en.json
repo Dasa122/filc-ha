@@ -36,7 +36,10 @@
         "title": "Filc options",
         "data": {
           "cohort_id": "Class",
-          "scan_interval": "Refresh interval (seconds)"
+          "scan_interval": "Refresh interval (seconds)",
+          "notify_service": "Notification phone",
+          "notify_lead": "Reminder before lesson (minutes)",
+          "notify_on_break": "Send break summary (next lesson + room)"
         }
       },
       "groups": {

@@ -16,10 +16,15 @@ from .const import (
     CONF_BASE_URL,
     CONF_COHORT_ID,
     CONF_COHORT_NAME,
+    CONF_NOTIFY_LEAD,
+    CONF_NOTIFY_ON_BREAK,
+    CONF_NOTIFY_SERVICE,
     CONF_SCAN_INTERVAL,
     CONF_SELECTED_GROUP_IDS,
     CONF_TIMETABLE_ID,
     DEFAULT_BASE_URL,
+    DEFAULT_NOTIFY_LEAD,
+    DEFAULT_NOTIFY_ON_BREAK,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
 )
@@ -219,6 +224,9 @@ class FilcOptionsFlow(config_entries.OptionsFlow):
     _cohort_name: str | None = None
     _cohorts: dict[str, str] = {}
     _interval: int = DEFAULT_SCAN_INTERVAL
+    _notify_service: str | None = None
+    _notify_lead: int = DEFAULT_NOTIFY_LEAD
+    _notify_on_break: bool = DEFAULT_NOTIFY_ON_BREAK
 
     async def async_step_init(self, user_input=None):
         entry = self.config_entry
@@ -240,12 +248,18 @@ class FilcOptionsFlow(config_entries.OptionsFlow):
             self._cohort_id = user_input[CONF_COHORT_ID]
             self._cohort_name = self._cohorts.get(self._cohort_id, "Filc")
             self._interval = user_input[CONF_SCAN_INTERVAL]
+            self._notify_service = user_input.get(CONF_NOTIFY_SERVICE) or None
+            self._notify_lead = user_input.get(CONF_NOTIFY_LEAD, DEFAULT_NOTIFY_LEAD)
+            self._notify_on_break = user_input.get(
+                CONF_NOTIFY_ON_BREAK, DEFAULT_NOTIFY_ON_BREAK
+            )
             return await self.async_step_groups()
 
         options = [
             selector.SelectOptionDict(value=c["id"], label=c["name"])
             for c in cohorts
         ]
+        notify_options = self._notify_options()
         schema = vol.Schema(
             {
                 vol.Required(
@@ -268,6 +282,32 @@ class FilcOptionsFlow(config_entries.OptionsFlow):
                         mode=selector.NumberSelectorMode.BOX,
                     )
                 ),
+                vol.Optional(
+                    CONF_NOTIFY_SERVICE,
+                    default=data.get(CONF_NOTIFY_SERVICE, ""),
+                ): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=notify_options,
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                ),
+                vol.Required(
+                    CONF_NOTIFY_LEAD,
+                    default=data.get(CONF_NOTIFY_LEAD, DEFAULT_NOTIFY_LEAD),
+                ): selector.NumberSelector(
+                    selector.NumberSelectorConfig(
+                        min=1,
+                        max=60,
+                        step=1,
+                        mode=selector.NumberSelectorMode.BOX,
+                    )
+                ),
+                vol.Required(
+                    CONF_NOTIFY_ON_BREAK,
+                    default=data.get(
+                        CONF_NOTIFY_ON_BREAK, DEFAULT_NOTIFY_ON_BREAK
+                    ),
+                ): selector.BooleanSelector(),
             }
         )
         return self.async_show_form(step_id="init", data_schema=schema)
@@ -290,6 +330,17 @@ class FilcOptionsFlow(config_entries.OptionsFlow):
             step_id="groups", data_schema=_group_schema(divisions, current)
         )
 
+    def _notify_options(self) -> list:
+        """List the phone notification targets (companion app services)."""
+        services = self.hass.services.async_services().get("notify", {})
+        options = [selector.SelectOptionDict(value="", label="(kikapcsolva)")]
+        for name in sorted(services):
+            if not name.startswith("mobile_app_"):
+                continue
+            label = name.removeprefix("mobile_app_").replace("_", " ").title()
+            options.append(selector.SelectOptionDict(value=name, label=label))
+        return options
+
     def _save(self, selected_group_ids: list[str]):
         return self.async_create_entry(
             title="",
@@ -299,5 +350,8 @@ class FilcOptionsFlow(config_entries.OptionsFlow):
                 CONF_TIMETABLE_ID: (self._timetable or {}).get("id"),
                 CONF_SELECTED_GROUP_IDS: selected_group_ids,
                 CONF_SCAN_INTERVAL: self._interval,
+                CONF_NOTIFY_SERVICE: self._notify_service or "",
+                CONF_NOTIFY_LEAD: self._notify_lead,
+                CONF_NOTIFY_ON_BREAK: self._notify_on_break,
             },
         )

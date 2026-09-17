@@ -36,7 +36,10 @@
         "title": "Filc beállítások",
         "data": {
           "cohort_id": "Osztály",
-          "scan_interval": "Frissítési időköz (másodperc)"
+          "scan_interval": "Frissítési időköz (másodperc)",
+          "notify_service": "Értesítési telefon",
+          "notify_lead": "Emlékeztető az óra előtt (perc)",
+          "notify_on_break": "Szünet értesítés (következő óra + terem)"
         }
       },
       "groups": {

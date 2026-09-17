@@ -18,6 +18,8 @@ companion app).
   automatically on every dashboard and widget.
 - `binary_sensor.filc_in_lesson` — on during a lesson, off during breaks (great for
   phone automations such as silencing notifications).
+- Optional **phone notifications** — pick your phone in the integration options and
+  Filc reminds you before lessons and at breaks (no YAML).
 
 The current/next logic is aware of **substitutions**, **moved lessons** and
 **cancelled lessons**, and it uses your real group choices (English/PE/IT splits)
@@ -130,12 +132,23 @@ automation:
 - **Same dashboard on both phones** — add the cards from [`examples/mobile_dashboard.yaml`](examples/mobile_dashboard.yaml); they render identically on iOS and Android.
 - **Home-screen widgets** — add `sensor.filc_<class>_next_lesson` and the timestamp sensors to a widget on either OS. Widgets are local to that phone.
 
-**Targeted notifications.** The companion app registers one `notify.mobile_app_<device>` service per phone:
+**Built-in phone picker (no YAML).** Open the integration's **Configure** dialog
+(*Settings → Devices & Services → Filc → Configure*). The **Notification phone**
+dropdown lists your phones (the `notify.mobile_app_*` services); pick one and Filc
+then sends, on its own:
 
-- Find the exact name in **Developer Tools → Actions** (search `notify.mobile_app`) or on the phone's device page under *Settings → Devices & Services → Mobile App*.
-- Send a test: Developer Tools → Actions → `notify.mobile_app_<device>`, message `test`.
-- Pick the phone by editing one variable — see [`examples/automation_next_lesson.yaml`](examples/automation_next_lesson.yaml) (`phone_service`). For several phones use a [`notify` group](https://www.home-assistant.io/integrations/notify.group/).
-- Silence a phone during lessons with [`examples/automation_in_lesson_dnd.yaml`](examples/automation_in_lesson_dnd.yaml).
+- a reminder *N minutes* before each lesson (*Reminder before lesson*), and
+- a *break summary* when a lesson ends (*Send break summary*), showing the next
+  subject and room.
+
+Leave the dropdown on *(kikapcsolva)/(disabled)* to turn notifications off. This
+works on both iPhone and Android and needs no automation.
+
+Prefer automations? The same entities drive them — see
+[`examples/automation_next_lesson.yaml`](examples/automation_next_lesson.yaml)
+(`phone_service` variable, or a [`notify` group](https://www.home-assistant.io/integrations/notify.group/)
+for several phones) and
+[`examples/automation_in_lesson_dnd.yaml`](examples/automation_in_lesson_dnd.yaml).
 
 ## Troubleshooting
 

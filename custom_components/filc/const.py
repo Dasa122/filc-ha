@@ -29,3 +29,9 @@ CONF_COHORT_NAME = "cohort_name"
 CONF_TIMETABLE_ID = "timetable_id"
 CONF_SELECTED_GROUP_IDS = "selected_group_ids"
 CONF_SCAN_INTERVAL = "scan_interval"
+CONF_NOTIFY_SERVICE = "notify_service"
+CONF_NOTIFY_LEAD = "notify_lead"
+CONF_NOTIFY_ON_BREAK = "notify_on_break"
+
+DEFAULT_NOTIFY_LEAD = 5
+DEFAULT_NOTIFY_ON_BREAK = True
