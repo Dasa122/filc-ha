@@ -13,12 +13,14 @@ from .const import (
     CONF_BASE_URL,
     CONF_COHORT_ID,
     CONF_COHORT_NAME,
+    CONF_LIVE_ACTIVITY,
     CONF_NOTIFY_LEAD,
     CONF_NOTIFY_ON_BREAK,
     CONF_NOTIFY_SERVICE,
     CONF_SCAN_INTERVAL,
     CONF_SELECTED_GROUP_IDS,
     CONF_TIMETABLE_ID,
+    DEFAULT_LIVE_ACTIVITY,
     DEFAULT_NOTIFY_LEAD,
     DEFAULT_NOTIFY_ON_BREAK,
     DEFAULT_SCAN_INTERVAL,
@@ -57,6 +59,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         data.get(CONF_NOTIFY_SERVICE),
         data.get(CONF_NOTIFY_LEAD, DEFAULT_NOTIFY_LEAD),
         data.get(CONF_NOTIFY_ON_BREAK, DEFAULT_NOTIFY_ON_BREAK),
+        data.get(CONF_LIVE_ACTIVITY, DEFAULT_LIVE_ACTIVITY),
     )
     notifier.async_setup()
     entry.async_on_unload(notifier.cancel)

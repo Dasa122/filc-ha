@@ -32,6 +32,8 @@ CONF_SCAN_INTERVAL = "scan_interval"
 CONF_NOTIFY_SERVICE = "notify_service"
 CONF_NOTIFY_LEAD = "notify_lead"
 CONF_NOTIFY_ON_BREAK = "notify_on_break"
+CONF_LIVE_ACTIVITY = "live_activity"
 
 DEFAULT_NOTIFY_LEAD = 5
 DEFAULT_NOTIFY_ON_BREAK = True
+DEFAULT_LIVE_ACTIVITY = True

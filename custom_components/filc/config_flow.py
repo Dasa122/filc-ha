@@ -16,6 +16,7 @@ from .const import (
     CONF_BASE_URL,
     CONF_COHORT_ID,
     CONF_COHORT_NAME,
+    CONF_LIVE_ACTIVITY,
     CONF_NOTIFY_LEAD,
     CONF_NOTIFY_ON_BREAK,
     CONF_NOTIFY_SERVICE,
@@ -23,6 +24,7 @@ from .const import (
     CONF_SELECTED_GROUP_IDS,
     CONF_TIMETABLE_ID,
     DEFAULT_BASE_URL,
+    DEFAULT_LIVE_ACTIVITY,
     DEFAULT_NOTIFY_LEAD,
     DEFAULT_NOTIFY_ON_BREAK,
     DEFAULT_SCAN_INTERVAL,
@@ -227,6 +229,7 @@ class FilcOptionsFlow(config_entries.OptionsFlow):
     _notify_service: str | None = None
     _notify_lead: int = DEFAULT_NOTIFY_LEAD
     _notify_on_break: bool = DEFAULT_NOTIFY_ON_BREAK
+    _live_activity: bool = DEFAULT_LIVE_ACTIVITY
 
     async def async_step_init(self, user_input=None):
         entry = self.config_entry
@@ -252,6 +255,9 @@ class FilcOptionsFlow(config_entries.OptionsFlow):
             self._notify_lead = user_input.get(CONF_NOTIFY_LEAD, DEFAULT_NOTIFY_LEAD)
             self._notify_on_break = user_input.get(
                 CONF_NOTIFY_ON_BREAK, DEFAULT_NOTIFY_ON_BREAK
+            )
+            self._live_activity = user_input.get(
+                CONF_LIVE_ACTIVITY, DEFAULT_LIVE_ACTIVITY
             )
             return await self.async_step_groups()
 
@@ -308,6 +314,10 @@ class FilcOptionsFlow(config_entries.OptionsFlow):
                         CONF_NOTIFY_ON_BREAK, DEFAULT_NOTIFY_ON_BREAK
                     ),
                 ): selector.BooleanSelector(),
+                vol.Required(
+                    CONF_LIVE_ACTIVITY,
+                    default=data.get(CONF_LIVE_ACTIVITY, DEFAULT_LIVE_ACTIVITY),
+                ): selector.BooleanSelector(),
             }
         )
         return self.async_show_form(step_id="init", data_schema=schema)
@@ -353,5 +363,6 @@ class FilcOptionsFlow(config_entries.OptionsFlow):
                 CONF_NOTIFY_SERVICE: self._notify_service or "",
                 CONF_NOTIFY_LEAD: self._notify_lead,
                 CONF_NOTIFY_ON_BREAK: self._notify_on_break,
+                CONF_LIVE_ACTIVITY: self._live_activity,
             },
         )

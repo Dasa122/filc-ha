@@ -39,7 +39,8 @@
           "scan_interval": "Frissítési időköz (másodperc)",
           "notify_service": "Értesítési telefon",
           "notify_lead": "Emlékeztető az óra előtt (perc)",
-          "notify_on_break": "Szünet értesítés (következő óra + terem)"
+          "notify_on_break": "Szünet értesítés (következő óra + terem)",
+          "live_activity": "Élő aktivitás (élő állapot a zárolási képernyőn)"
         }
       },
       "groups": {

@@ -39,7 +39,8 @@
           "scan_interval": "Refresh interval (seconds)",
           "notify_service": "Notification phone",
           "notify_lead": "Reminder before lesson (minutes)",
-          "notify_on_break": "Send break summary (next lesson + room)"
+          "notify_on_break": "Send break summary (next lesson + room)",
+          "live_activity": "Maintain a Live Activity (live actions on the Lock Screen)"
         }
       },
       "groups": {

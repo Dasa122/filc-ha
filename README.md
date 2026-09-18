@@ -167,6 +167,26 @@ for several phones) and
   The activity is identified by the tag `filc_<class>`; sending
   `{"message": "clear_notification", "data": {"tag": "filc_<class>"}}` to the same
   phone ends it.
+
+#### How the Live Activity is kept up to date
+
+When a phone is selected in *Configure → Notification phone* and **Maintain a Live
+Activity** is on, the integration starts the activity with Home Assistant and pushes an
+update at **every lesson start and end** (lesson → break → next lesson), then clears it
+once the school day is over. It reuses the tag `filc_<class>`, so updates happen in place.
+
+Requirements and gotchas:
+
+- **iOS needs iOS 17.2+ and Home Assistant Core 2026.7.0+.** Android Live Updates need Android 16+.
+- Enable **Live Activities** in the companion app (*Settings → Live Activities*); the first
+  activity shows a one-time privacy notice.
+- The app and Home Assistant must be able to exchange the Live Activity token (stable
+  connectivity, and a remote connection if you are away from home).
+- iOS limits how often a **new** activity can be started ("push-to-start budget"). Avoid
+  repeatedly starting and ending one while testing; reuse the same activity or clear it and
+  wait a few minutes.
+- The timer is the companion app `chronometer`, which counts down **on the device**, so no
+  repeated pushes are needed between lessons.
 - **Download diagnostics** — *Filc → ⋮ → Download diagnostics* returns the resolved current/next
   lesson, counts and the active timetable (the API key is redacted).
 
