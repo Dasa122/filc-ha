@@ -59,6 +59,7 @@ def _make_occurrence(
         room = lesson.rooms[0] if lesson.rooms else None
     if teacher is None:
         teacher = lesson.teachers[0] if lesson.teachers else None
+    teacher_short = lesson.teacher_shorts[0] if lesson.teacher_shorts else None
     return Occurrence(
         lesson=lesson,
         date=date,
@@ -66,6 +67,7 @@ def _make_occurrence(
         end=end_dt,
         room=room,
         teacher=teacher,
+        teacher_short=teacher_short,
         moved=moved,
     )
 
@@ -152,8 +154,10 @@ def occurrences_for_date(
                         filter(None, [teacher.get("firstName"), teacher.get("lastName")])
                     ).strip()
                     occ.teacher = name or teacher.get("short") or substituter
+                    occ.teacher_short = teacher.get("short") or None
                 else:
                     occ.teacher = substituter
+                    occ.teacher_short = None
 
     # 4. Sort by start time.
     return sorted(base.values(), key=lambda o: o.start)
@@ -184,6 +188,20 @@ def next_occurrence(
             if occ.cancelled:
                 continue
             if occ.start > now:
+                return occ
+    return None
+
+
+def first_occurrence_after_day(
+    now, lessons, selected_group_ids, moved_lessons, substitutions, max_days: int = 14
+):
+    """First non-cancelled occurrence on the first date AFTER now.date() that has any."""
+    for offset in range(1, max_days + 1):
+        day = now.date() + dt.timedelta(days=offset)
+        for occ in occurrences_for_date(
+            day, lessons, selected_group_ids, moved_lessons, substitutions
+        ):
+            if not occ.cancelled:
                 return occ
     return None
 

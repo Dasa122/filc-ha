@@ -103,3 +103,13 @@ class FilcDataUpdateCoordinator(DataUpdateCoordinator[ScheduleData]):
             data.moved_lessons,
             data.substitutions,
         )
+
+    def first_lesson_after_day(self) -> Occurrence | None:
+        """First lesson on the next school day that has lessons."""
+        data = self.data
+        if not data:
+            return None
+        return schedule.first_occurrence_after_day(
+            schedule.now(), data.lessons, data.selected_group_ids,
+            data.moved_lessons, data.substitutions,
+        )

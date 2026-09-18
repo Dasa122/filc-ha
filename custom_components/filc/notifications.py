@@ -10,7 +10,7 @@ from homeassistant.helpers.event import async_track_point_in_time
 
 from . import schedule
 from .coordinator import FilcDataUpdateCoordinator
-from .messages import break_message, live_activity, reminder
+from .messages import live_activity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -50,6 +50,8 @@ class FilcNotifier:
         self.hass = hass
         self.coordinator = coordinator
         self._service = service or None
+        # kept only so the existing config-option keys still round-trip; the
+        # reminder/break pushes are currently disabled.
         self._lead = timedelta(minutes=lead_minutes)
         self._on_break = on_break
         self._live_activity_enabled = live_activity_enabled
@@ -127,18 +129,6 @@ class FilcNotifier:
         if current is not None and current.end > now:
             self._schedule_point(current.end, self._handle_lesson_end)
 
-        if not self.enabled:
-            return
-
-        # Reminder shortly before the next lesson.
-        if upcoming is not None:
-            when = upcoming.start - self._lead
-            if when > now:
-                lesson_id = upcoming.lesson.id
-                self._schedule_point(
-                    when, lambda lid=lesson_id: self._notify_before(lid)
-                )
-
     @callback
     def _handle_lesson_start(self) -> None:
         self.hass.async_create_task(self.coordinator.async_request_refresh())
@@ -146,8 +136,6 @@ class FilcNotifier:
     @callback
     def _handle_lesson_end(self) -> None:
         self.hass.async_create_task(self.coordinator.async_request_refresh())
-        if self.enabled and self._on_break:
-            self.hass.async_create_task(self._notify_break())
 
     def _schedule_point(self, when, action) -> None:
         @callback
@@ -176,22 +164,6 @@ class FilcNotifier:
                 "data": activity_notify_data(payload, self._tag),
             }
         )
-
-    async def _notify_before(self, lesson_id: str) -> None:
-        upcoming = self.coordinator.upcoming()
-        if upcoming is None or upcoming.lesson.id != lesson_id:
-            return
-        minutes = int(self._lead.total_seconds() // 60)
-        title, message = reminder(upcoming, minutes, self._hu)
-        await self._send_raw({"title": title, "message": message})
-
-    async def _notify_break(self) -> None:
-        now = schedule.now()
-        upcoming = self.coordinator.upcoming()
-        if upcoming is None or upcoming.date != now.date():
-            return
-        title, message = break_message(upcoming, self._hu)
-        await self._send_raw({"title": title, "message": message})
 
     async def _send_raw(self, data: dict) -> None:
         try:

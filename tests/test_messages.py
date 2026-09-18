@@ -23,6 +23,7 @@ def _occ(room="A118", teacher="Mészáros Tamás", start=(10, 50), end=(11, 35))
         end=f"{end[0]:02d}:{end[1]:02d}",
         subject="Digitális kultúra",
         subject_short="DiKu",
+        teacher_shorts=["Mészáros"],
     )
     return Occurrence(
         lesson=lesson,
@@ -31,6 +32,7 @@ def _occ(room="A118", teacher="Mészáros Tamás", start=(10, 50), end=(11, 35))
         end=dt.datetime(2026, 9, 21, *end, tzinfo=TZ),
         room=room,
         teacher=teacher,
+        teacher_short="Mészáros",
     )
 
 
@@ -117,8 +119,8 @@ def test_live_activity_in_lesson():
     now = dt.datetime(2026, 9, 21, 11, 0, tzinfo=TZ)
     payload = messages.live_activity(occ, occ, now, hu=True)
     assert payload["title"] == "Filc"
-    assert payload["message"] == "Digitális kultúra · 📍 A118 · vége 11:35"
-    assert payload["critical_text"] == "DiKu · A118"
+    assert payload["message"] == "Digitális kultúra"
+    assert payload["critical_text"] == "A118 · DiKu · Mészáros"
     assert payload["chronometer"] is True
     assert payload["when_relative"] is True
     assert payload["when"] == 2100
@@ -130,8 +132,8 @@ def test_live_activity_break():
     now = dt.datetime(2026, 9, 21, 10, 0, tzinfo=TZ)
     payload = messages.live_activity(None, occ, now, hu=True)
     assert payload["title"] == "Filc"
-    assert payload["message"] == "Szünet vége 10:50 · Digitális kultúra · 📍 A118"
-    assert payload["critical_text"] == "Szünet · DiKu · A118"
+    assert payload["message"] == "Szünet\nDigitális kultúra"
+    assert payload["critical_text"] == "A118 · Mészáros"
     assert payload["when"] == 3000
     assert payload["chronometer"] is True
 
@@ -156,5 +158,28 @@ def test_live_activity_break_en():
     occ = _occ()
     now = dt.datetime(2026, 9, 21, 10, 0, tzinfo=TZ)
     payload = messages.live_activity(None, occ, now, hu=False)
-    assert payload["message"] == "Break ends 10:50 · Digitális kultúra · 📍 A118"
-    assert payload["critical_text"] == "Break · DiKu · A118"
+    assert payload["message"] == "Break\nDigitális kultúra"
+    assert payload["critical_text"] == "A118 · Mészáros"
+
+
+def test_school_state_in_lesson():
+    occ = _occ()
+    assert messages.school_state(occ, occ, dt.date(2026, 9, 21), hu=True) == "Óra"
+    assert messages.school_state(occ, occ, dt.date(2026, 9, 21), hu=False) == "In lesson"
+
+
+def test_school_state_break():
+    occ = _occ()
+    assert messages.school_state(None, occ, dt.date(2026, 9, 21), hu=True) == "Szünet"
+    assert messages.school_state(None, occ, dt.date(2026, 9, 21), hu=False) == "Break"
+
+
+def test_school_state_no_more_today():
+    occ = _occ()
+    assert messages.school_state(None, occ, dt.date(2026, 9, 22), hu=True) == "Nincs több óra ma"
+    assert messages.school_state(None, occ, dt.date(2026, 9, 22), hu=False) == "No more today"
+
+
+def test_school_state_no_lessons():
+    assert messages.school_state(None, None, dt.date(2026, 9, 21), hu=True) == "Nincs óra"
+    assert messages.school_state(None, None, dt.date(2026, 9, 21), hu=False) == "No lessons"

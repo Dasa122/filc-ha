@@ -227,3 +227,20 @@ def test_expand_range():
     )
     # Monday (moved+cancelled+substituted) + next Monday (Digitális only).
     assert [o.lesson.id for o in occs] == [OSZTALYFONOKI_ID, DIGITALIS_ID, DIGITALIS_ID]
+
+
+def test_first_occurrence_after_day():
+    # Sunday 2026-09-20; tomorrow is Monday 2026-09-21.
+    now = dt.datetime(2026, 9, 20, 12, 0, tzinfo=TZ)
+    tomorrow = now.date() + dt.timedelta(days=1)
+    lesson = Lesson(
+        id="tomorrow", weekday=tomorrow.isoweekday(), period_no=1,
+        start="08:00", end="08:45", subject="s", subject_short="s",
+    )
+    occ = schedule.first_occurrence_after_day(now, [lesson], set(), [], [])
+    assert occ is not None
+    assert occ.date == tomorrow
+    assert occ.start == dt.datetime(2026, 9, 21, 8, 0, tzinfo=TZ)
+
+    # No lessons in range -> None.
+    assert schedule.first_occurrence_after_day(now, [], set(), [], [], max_days=7) is None

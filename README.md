@@ -19,7 +19,8 @@ companion app).
 - `binary_sensor.filc_in_lesson` — on during a lesson, off during breaks (great for
   phone automations such as silencing notifications).
 - Optional **phone notifications** — pick your phone in the integration options and
-  Filc reminds you before lessons and at breaks (no YAML).
+  Filc maintains a **Live Activity / Live Update** on it (no YAML). The reminder/break
+  push options are currently disabled.
 
 The current/next logic is aware of **substitutions**, **moved lessons** and
 **cancelled lessons**, and it uses your real group choices (English/PE/IT splits)
@@ -79,6 +80,14 @@ integration still works — you simply pick your groups by hand.
 | `sensor.filc_<class>_next_room` | Room of the next lesson |
 | `sensor.filc_current_lesson_end` | Timestamp → live countdown to the end of the lesson |
 | `sensor.filc_next_lesson_start` | Timestamp → live countdown to the next lesson |
+| `sensor.filc_<class>_current_teacher` | Teacher of the lesson in progress |
+| `sensor.filc_<class>_next_teacher` | Teacher of the next lesson |
+| `sensor.filc_<class>_current_period` | Period number of the lesson in progress |
+| `sensor.filc_<class>_next_period` | Period number of the next lesson |
+| `sensor.filc_<class>_current_lesson_start` | Timestamp when the current lesson started |
+| `sensor.filc_<class>_next_lesson_end` | Timestamp when the next lesson ends |
+| `sensor.filc_<class>_school_state` | `Óra` / `Szünet` / `Nincs több óra ma` / `Nincs óra` |
+| `sensor.filc_<class>_next_day_first_lesson` | Timestamp of the first lesson on the next school day |
 | `binary_sensor.filc_in_lesson` | On during a lesson |
 
 Entity ids depend on your class (e.g. `sensor.filc_9a_current_lesson`).
@@ -137,11 +146,9 @@ automation:
 **Built-in phone picker (no YAML).** Open the integration's **Configure** dialog
 (*Settings → Devices & Services → Filc → Configure*). The **Notification phone**
 dropdown lists your phones (the `notify.mobile_app_*` services); pick one and Filc
-then sends, on its own:
-
-- a reminder *N minutes* before each lesson (*Reminder before lesson*), and
-- a *break summary* when a lesson ends (*Send break summary*), showing the next
-  subject and room.
+then maintains a **Live Activity** on it, on its own. The *Reminder before lesson*
+and *Send break summary* settings still appear in the options dialog but are not
+currently sent.
 
 Leave the dropdown on *(kikapcsolva)/(disabled)* to turn notifications off. This
 works on both iPhone and Android and needs no automation.

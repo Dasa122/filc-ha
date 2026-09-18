@@ -73,6 +73,30 @@
       },
       "next_lesson_start": {
         "name": "Következő óra kezdete"
+      },
+      "current_teacher": {
+        "name": "Aktuális tanár"
+      },
+      "next_teacher": {
+        "name": "Következő tanár"
+      },
+      "current_period": {
+        "name": "Aktuális óra sorszáma"
+      },
+      "next_period": {
+        "name": "Következő óra sorszáma"
+      },
+      "current_lesson_start": {
+        "name": "Aktuális óra kezdete"
+      },
+      "next_lesson_end": {
+        "name": "Következő óra vége"
+      },
+      "school_state": {
+        "name": "Iskolai állapot"
+      },
+      "next_day_first_lesson": {
+        "name": "Következő nap első órája"
       }
     },
     "binary_sensor": {

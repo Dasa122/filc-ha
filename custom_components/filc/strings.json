@@ -73,6 +73,30 @@
       },
       "next_lesson_start": {
         "name": "Next lesson start"
+      },
+      "current_teacher": {
+        "name": "Current teacher"
+      },
+      "next_teacher": {
+        "name": "Next teacher"
+      },
+      "current_period": {
+        "name": "Current period"
+      },
+      "next_period": {
+        "name": "Next period"
+      },
+      "current_lesson_start": {
+        "name": "Current lesson start"
+      },
+      "next_lesson_end": {
+        "name": "Next lesson end"
+      },
+      "school_state": {
+        "name": "School state"
+      },
+      "next_day_first_lesson": {
+        "name": "Next day first lesson"
       }
     },
     "binary_sensor": {

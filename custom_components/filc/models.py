@@ -18,6 +18,7 @@ class Lesson:
     subject: str
     subject_short: str
     teachers: list[str] = field(default_factory=list)
+    teacher_shorts: list[str] = field(default_factory=list)
     rooms: list[str] = field(default_factory=list)
     group_ids: set[str] = field(default_factory=set)
     entire_class: bool = False
@@ -30,7 +31,14 @@ class Lesson:
         period = raw.get("period") or {}
         subject = raw.get("subject") or {}
 
-        teachers = [t.get("name") for t in raw.get("teachers") or [] if t.get("name")]
+        teachers = []
+        teacher_shorts = []
+        for t in raw.get("teachers") or []:
+            name = t.get("name")
+            if not name:
+                continue
+            teachers.append(name)
+            teacher_shorts.append(t.get("short") or name)
         rooms = []
         for c in raw.get("classrooms") or []:
             rooms.append(c.get("short") or c.get("name") or "")
@@ -60,6 +68,7 @@ class Lesson:
             subject=subject_name,
             subject_short=subject_short,
             teachers=teachers,
+            teacher_shorts=teacher_shorts,
             rooms=rooms,
             group_ids=group_ids,
             entire_class=entire_class,
@@ -76,6 +85,7 @@ class Occurrence:
     end: dt.datetime
     room: str | None = None
     teacher: str | None = None
+    teacher_short: str | None = None
     moved: bool = False
     cancelled: bool = False
     substituted: bool = False
