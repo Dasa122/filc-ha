@@ -75,6 +75,8 @@ integration still works — you simply pick your groups by hand.
 | `calendar.filc_<class>` | Lessons, substitutions and moved lessons |
 | `sensor.filc_current_lesson` | Current subject (or `Szünet`), room, teacher, `ends_at` |
 | `sensor.filc_next_lesson` | Next subject, room, teacher, `starts_at` |
+| `sensor.filc_<class>_current_room` | Room of the lesson in progress |
+| `sensor.filc_<class>_next_room` | Room of the next lesson |
 | `sensor.filc_current_lesson_end` | Timestamp → live countdown to the end of the lesson |
 | `sensor.filc_next_lesson_start` | Timestamp → live countdown to the next lesson |
 | `binary_sensor.filc_in_lesson` | On during a lesson |

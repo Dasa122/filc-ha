@@ -34,6 +34,8 @@ cards:
       - entity: sensor.filc_9_a_current_lesson_end
         name: Aktuális óra vége
       - entity: sensor.filc_9_a_next_lesson
+      - entity: sensor.filc_9_a_current_room
+      - entity: sensor.filc_9_a_next_room
       - entity: sensor.filc_9_a_next_lesson_start
         name: Következő óra kezdete
       - entity: binary_sensor.filc_9_a_in_lesson

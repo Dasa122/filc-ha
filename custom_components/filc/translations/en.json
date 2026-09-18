@@ -62,6 +62,12 @@
       "next_lesson": {
         "name": "Next lesson"
       },
+      "current_room": {
+        "name": "Current room"
+      },
+      "next_room": {
+        "name": "Next room"
+      },
       "current_lesson_end": {
         "name": "Current lesson end"
       },

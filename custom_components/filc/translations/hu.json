@@ -62,6 +62,12 @@
       "next_lesson": {
         "name": "Következő óra"
       },
+      "current_room": {
+        "name": "Aktuális terem"
+      },
+      "next_room": {
+        "name": "Következő terem"
+      },
       "current_lesson_end": {
         "name": "Aktuális óra vége"
       },

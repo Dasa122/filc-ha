@@ -134,6 +134,59 @@ class FilcNextLessonStartSensor(_FilcSensor):
         return upcoming.start if upcoming else None
 
 
+class FilcCurrentRoomSensor(_FilcSensor):
+    """Room of the lesson currently in progress."""
+
+    _attr_translation_key = "current_room"
+    _attr_icon = "mdi:door"
+
+    def __init__(self, coordinator) -> None:
+        super().__init__(coordinator, "current_room")
+
+    @property
+    def native_value(self) -> str | None:
+        current = self.coordinator.current()
+        return current.room if current else None
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        current = self.coordinator.current()
+        if not current:
+            return {}
+        return {
+            "lesson": current.lesson.subject or None,
+            "teacher": current.teacher,
+            "ends_at": current.end.isoformat(),
+        }
+
+
+class FilcNextRoomSensor(_FilcSensor):
+    """Room of the next lesson."""
+
+    _attr_translation_key = "next_room"
+    _attr_icon = "mdi:door-open"
+
+    def __init__(self, coordinator) -> None:
+        super().__init__(coordinator, "next_room")
+
+    @property
+    def native_value(self) -> str | None:
+        upcoming = self.coordinator.upcoming()
+        return upcoming.room if upcoming else None
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        upcoming = self.coordinator.upcoming()
+        if not upcoming:
+            return {}
+        return {
+            "lesson": upcoming.lesson.subject or None,
+            "teacher": upcoming.teacher,
+            "starts_at": upcoming.start.isoformat(),
+            "date": upcoming.date.isoformat(),
+        }
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
@@ -145,6 +198,8 @@ async def async_setup_entry(
         [
             FilcCurrentLessonSensor(coordinator),
             FilcNextLessonSensor(coordinator),
+            FilcCurrentRoomSensor(coordinator),
+            FilcNextRoomSensor(coordinator),
             FilcCurrentLessonEndSensor(coordinator),
             FilcNextLessonStartSensor(coordinator),
         ]
