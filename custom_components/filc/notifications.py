@@ -1,16 +1,4 @@
-"""Timely state refreshes and phone notifications for Filc.
-
-Three jobs:
-1. Refresh the coordinator exactly at lesson boundaries, so the current/next
-   sensors and the ``in_lesson`` binary sensor flip on time even though the
-   poll interval is coarse (5 minutes by default).
-2. If a phone (a ``notify.mobile_app_*`` service) is selected in the options,
-   send a reminder before the next lesson and a break summary when a lesson
-   ends.
-3. Keep a Live Activity (iOS) / Live Update (Android) in sync with the live
-   actions: start it with Home Assistant, update it at every lesson start and
-   end, and clear it once the school day is over.
-"""
+"""Timely state refreshes, phone notifications and the Live Activity for Filc."""
 
 from __future__ import annotations
 
@@ -26,8 +14,25 @@ from .messages import break_message, live_activity, reminder
 
 _LOGGER = logging.getLogger(__name__)
 
-# Payload fields copied from the pure live_activity() helper into data.data.
-_ACTIVITY_KEYS = ("chronometer", "when", "when_relative", "progress", "progress_max")
+# Fields copied from the pure live_activity() payload into the notify data block.
+# No progress/progress_max on purpose: on iOS `progress` replaces `critical_text`,
+# and we want the lesson name + room visible next to the timer.
+_ACTIVITY_KEYS = ("critical_text", "chronometer", "when", "when_relative")
+
+
+def activity_notify_data(payload: dict, tag: str) -> dict:
+    """Build the companion-app data block for a Live Activity / Live Update."""
+    data: dict = {
+        "tag": tag,
+        "live_update": True,
+        "notification_icon": "mdi:school",
+        "notification_icon_color": "#15ba81",
+        "color": "#15ba81",
+    }
+    for key in _ACTIVITY_KEYS:
+        if key in payload:
+            data[key] = payload[key]
+    return data
 
 
 class FilcNotifier:
@@ -52,6 +57,7 @@ class FilcNotifier:
         self._tag = f"filc_{coordinator.cohort_id}"
         self._unsubs: list = []
         self._unsub_listener = None
+        self._last_key: str | None = None
 
     @property
     def enabled(self) -> bool:
@@ -59,17 +65,24 @@ class FilcNotifier:
         return bool(self._service)
 
     def async_setup(self) -> None:
-        """Start listening for updates, schedule the boundaries, show the activity."""
+        """Start listening, schedule the boundaries and show the activity once."""
         self._unsub_listener = self.coordinator.async_add_listener(
             self._handle_update
         )
         self._reschedule()
         if self.enabled and self._live_activity_enabled:
+            self._last_key = self._state_key()
             self.hass.async_create_task(self._update_live_activity())
 
     @callback
     def _handle_update(self) -> None:
         self._reschedule()
+        if not (self.enabled and self._live_activity_enabled):
+            return
+        key = self._state_key()
+        if key != self._last_key:
+            self._last_key = key
+            self.hass.async_create_task(self._update_live_activity())
 
     def cancel(self) -> None:
         """Cancel timers and the coordinator listener."""
@@ -83,6 +96,21 @@ class FilcNotifier:
             unsub()
         self._unsubs = []
 
+    def _state_key(self) -> str:
+        """A key that only changes at lesson boundaries (drives the activity)."""
+        now = schedule.now()
+        current = self.coordinator.current()
+        upcoming = self.coordinator.upcoming()
+        if current is None and (upcoming is None or upcoming.date != now.date()):
+            return f"clear|{now.date().isoformat()}"
+        return "|".join(
+            [
+                now.date().isoformat(),
+                current.lesson.id if current else "-",
+                upcoming.lesson.id if upcoming else "-",
+            ]
+        )
+
     def _reschedule(self) -> None:
         self._cancel_timers()
         if not self.coordinator.data:
@@ -92,11 +120,10 @@ class FilcNotifier:
         current = self.coordinator.current()
         upcoming = self.coordinator.upcoming()
 
-        # Flip the state sensors and the activity exactly at the lesson start.
+        # Refresh exactly at the next lesson start / current lesson end. The
+        # refresh triggers _handle_update, which pushes the Live Activity update.
         if upcoming is not None and upcoming.start > now:
             self._schedule_point(upcoming.start, self._handle_lesson_start)
-
-        # Flip the state sensors and the activity at the end of the lesson.
         if current is not None and current.end > now:
             self._schedule_point(current.end, self._handle_lesson_end)
 
@@ -115,14 +142,10 @@ class FilcNotifier:
     @callback
     def _handle_lesson_start(self) -> None:
         self.hass.async_create_task(self.coordinator.async_request_refresh())
-        if self.enabled and self._live_activity_enabled:
-            self.hass.async_create_task(self._update_live_activity())
 
     @callback
     def _handle_lesson_end(self) -> None:
         self.hass.async_create_task(self.coordinator.async_request_refresh())
-        if self.enabled and self._live_activity_enabled:
-            self.hass.async_create_task(self._update_live_activity())
         if self.enabled and self._on_break:
             self.hass.async_create_task(self._notify_break())
 
@@ -146,21 +169,11 @@ class FilcNotifier:
             return
 
         payload = live_activity(current, upcoming, now, self._hu)
-        notify_data: dict = {
-            "tag": self._tag,
-            "live_update": True,
-            "notification_icon": "mdi:school",
-            "notification_icon_color": "#15ba81",
-            "color": "#15ba81",
-        }
-        for key in _ACTIVITY_KEYS:
-            if key in payload:
-                notify_data[key] = payload[key]
         await self._send_raw(
             {
                 "title": payload["title"],
                 "message": payload["message"],
-                "data": notify_data,
+                "data": activity_notify_data(payload, self._tag),
             }
         )
 

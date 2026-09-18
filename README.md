@@ -159,12 +159,12 @@ for several phones) and
   live action to the selected phone and to the Home Assistant notification area. Handy to verify
   the phone target and the message text without waiting for a lesson.
   Pressing it starts a **Live Activity** (iOS) / **Live Update** (Android) on the
-  selected phone: the card stays on the Lock Screen / Dynamic Island. In a lesson it
-  shows the current subject, its room and the end time with a live progress bar and a
-  countdown to the end; during a break it reads as a break, counts down to when the
-  break ends and shows the next lesson with its room. It needs a phone selected in *Configure → Notification
-  phone*; without one the button only posts to the Home Assistant notification area.
-  The activity is identified by the tag `filc_<class>`; sending
+  selected phone. The header is always `Filc`; the companion app hides the main
+  `message` line while the countdown runs, so the **current lesson and room** (or the
+  **next lesson and room** during a break) are shown as the shorter `critical_text`
+  next to the timer. In a lesson the timer counts to the lesson end; during a break it
+  counts to when the break ends. No progress bar is sent, because it would replace that
+  text on iOS. The activity is identified by the tag `filc_<class>`; sending
   `{"message": "clear_notification", "data": {"tag": "filc_<class>"}}` to the same
   phone ends it.
 
@@ -172,8 +172,9 @@ for several phones) and
 
 When a phone is selected in *Configure → Notification phone* and **Maintain a Live
 Activity** is on, the integration starts the activity with Home Assistant and pushes an
-update at **every lesson start and end** (lesson → break → next lesson), then clears it
-once the school day is over. It reuses the tag `filc_<class>`, so updates happen in place.
+update whenever the live state actually changes - lesson start, break, next lesson - and
+clears it once the school day is over. It reuses the tag `filc_<class>`, so updates
+happen in place.
 
 Requirements and gotchas:
 

@@ -67,45 +67,46 @@ def live_state(current, upcoming, today, hu: bool = True) -> tuple[str, str]:
 def live_activity(current, upcoming, now, hu: bool = True) -> dict:
     """Payload fields for a Live Activity / Live Update (no HA imports).
 
+    The companion app replaces `message` with the chronometer timer on iOS and
+    hides `critical_text` when `progress` is set, so the lesson name and room are
+    sent in `critical_text` (visible next to the timer) and no progress bar is used.
     `now` must be a timezone-aware datetime in the school timezone.
-    `chronometer` + `when` + `when_relative` make the timer tick on the device
-    with no further pushes.
     """
     if current is not None:
         subject = _subject(current)
+        short = current.lesson.subject_short or subject
         room = f" · 📍 {current.room}" if current.room else ""
+        short_room = f" · {current.room}" if current.room else ""
         remaining = max(int((current.end - now).total_seconds()), 1)
-        total = max(int((current.end - current.start).total_seconds()), 1)
-        elapsed = max(int((now - current.start).total_seconds()), 0)
         if hu:
-            title = "Filc – óra"
             message = f"{subject}{room} · vége {current.end:%H:%M}"
         else:
-            title = "Filc – lesson"
             message = f"{subject}{room} · ends {current.end:%H:%M}"
         return {
-            "title": title,
+            "title": "Filc",
             "message": message,
+            "critical_text": f"{short}{short_room}",
             "chronometer": True,
             "when": remaining,
             "when_relative": True,
-            "progress": min(elapsed, total),
-            "progress_max": total,
         }
 
     if upcoming is not None and upcoming.date == now.date():
         subject = _subject(upcoming)
+        short = upcoming.lesson.subject_short or subject
         room = f" · 📍 {upcoming.room}" if upcoming.room else ""
+        short_room = f" · {upcoming.room}" if upcoming.room else ""
         until = max(int((upcoming.start - now).total_seconds()), 1)
         if hu:
-            title = "Filc – szünet"
             message = f"Szünet vége {upcoming.start:%H:%M} · {subject}{room}"
+            critical = f"Szünet · {short}{short_room}"
         else:
-            title = "Filc – break"
             message = f"Break ends {upcoming.start:%H:%M} · {subject}{room}"
+            critical = f"Break · {short}{short_room}"
         return {
-            "title": title,
+            "title": "Filc",
             "message": message,
+            "critical_text": critical,
             "chronometer": True,
             "when": until,
             "when_relative": True,

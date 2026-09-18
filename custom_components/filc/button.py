@@ -12,6 +12,7 @@ from .const import CONF_NOTIFY_SERVICE
 from .coordinator import FilcDataUpdateCoordinator
 from .entity import FilcEntity
 from .messages import live_activity, live_state
+from .notifications import activity_notify_data
 
 
 async def async_setup_entry(
@@ -47,29 +48,15 @@ class FilcTestLiveActionsButton(FilcEntity, ButtonEntity):
         service = data.get(CONF_NOTIFY_SERVICE)
         if service:
             payload = live_activity(current, upcoming, now, hu)
-            notify_data: dict = {
-                "tag": f"filc_{self.coordinator.cohort_id}",
-                "live_update": True,
-                "notification_icon": "mdi:school",
-                "notification_icon_color": "#15ba81",
-                "color": "#15ba81",
-            }
-            for key in (
-                "chronometer",
-                "when",
-                "when_relative",
-                "progress",
-                "progress_max",
-            ):
-                if key in payload:
-                    notify_data[key] = payload[key]
             await self.hass.services.async_call(
                 "notify",
                 service,
                 {
                     "title": payload["title"],
                     "message": payload["message"],
-                    "data": notify_data,
+                    "data": activity_notify_data(
+                        payload, f"filc_{self.coordinator.cohort_id}"
+                    ),
                 },
                 blocking=False,
             )

@@ -48,8 +48,12 @@ class FilcCurrentLessonSensor(_FilcSensor):
         current = self.coordinator.current()
         upcoming = self.coordinator.upcoming()
         if current:
+            name = current.lesson.subject or None
             attrs.update(
-                subject=current.lesson.subject or None,
+                current_lesson=name,
+                current_room=current.room,
+                current_teacher=current.teacher,
+                subject=name,
                 room=current.room,
                 teacher=current.teacher,
                 period=current.lesson.period_no,
@@ -58,8 +62,9 @@ class FilcCurrentLessonSensor(_FilcSensor):
             )
         if upcoming:
             attrs.update(
-                next_subject=upcoming.lesson.subject or None,
+                next_lesson=upcoming.lesson.subject or None,
                 next_room=upcoming.room,
+                next_subject=upcoming.lesson.subject or None,
                 next_starts_at=upcoming.start.isoformat(),
             )
         return attrs
@@ -87,6 +92,7 @@ class FilcNextLessonSensor(_FilcSensor):
         if not upcoming:
             return {}
         return {
+            "lesson": upcoming.lesson.subject or None,
             "subject": upcoming.lesson.subject or None,
             "room": upcoming.room,
             "teacher": upcoming.teacher,
