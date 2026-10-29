@@ -14,6 +14,15 @@ _LOGGER = logging.getLogger(__name__)
 TIMEOUT = aiohttp.ClientTimeout(total=15)
 
 
+def _items(payload: Any) -> list:
+    """Unwrap a list or a ``{"items": [...]}`` envelope into a list."""
+    if isinstance(payload, dict):
+        return payload.get("items") or []
+    if isinstance(payload, list):
+        return payload
+    return []
+
+
 class FilcApiError(Exception):
     """Raised when the Filc API returns an error."""
 
@@ -62,13 +71,14 @@ class FilcApi:
                     raise FilcApiError(
                         f"HTTP {resp.status} for {path}", resp.status
                     )
-                payload = await resp.json()
+                try:
+                    payload = await resp.json()
+                except ValueError as err:
+                    raise FilcApiError(f"Malformed response for {path}") from err
         except aiohttp.ClientError as err:
             raise FilcApiError(f"Connection error: {err}") from err
 
-        if not isinstance(payload, dict) or not payload.get("success"):
-            raise FilcApiError(f"Malformed response for {path}")
-        return payload.get("data")
+        return payload
 
     async def ping(self) -> Any:
         """Health check."""
@@ -80,23 +90,21 @@ class FilcApi:
 
     async def cohorts(self, timetable_id: str) -> list[dict]:
         """Return the cohorts (classes) of a timetable."""
-        return (
+        return _items(
             await self._get(f"/timetable/cohorts/getAllForTimetable/{timetable_id}")
-            or []
         )
 
     async def periods(self) -> list[dict]:
         """Return the period (lesson bell) definitions."""
-        return await self._get("/timetable/periods/getAll") or []
+        return _items(await self._get("/timetable/periods/getAll"))
 
     async def lessons(self, cohort_id: str, timetable_id: str) -> list[dict]:
         """Return the weekly lesson grid of a cohort."""
-        return (
+        return _items(
             await self._get(
                 f"/timetable/lessons/getForCohort/{cohort_id}",
                 params={"timetableId": timetable_id},
             )
-            or []
         )
 
     async def substitutions(self, cohort_id: str) -> list[dict]:
@@ -106,9 +114,8 @@ class FilcApi:
 
     async def moved_lessons(self, cohort_id: str) -> list[dict]:
         """Return the relevant moved lessons of a cohort."""
-        return (
+        return _items(
             await self._get(f"/timetable/movedLessons/cohort/{cohort_id}/relevant")
-            or []
         )
 
     async def groups(self, cohort_id: str) -> list[dict]:
@@ -117,14 +124,20 @@ class FilcApi:
         With a valid API key the ``selected`` flag marks the signed-in user's
         own group choices (as picked in the live Filc app).
         """
-        return await self._get(f"/timetable/groups/getForCohort/{cohort_id}") or []
+        return _items(await self._get(f"/timetable/groups/getForCohort/{cohort_id}"))
 
     async def validate_key(self) -> bool:
-        """Return True when the configured API key is accepted."""
+        """Return True when the configured API key is accepted.
+
+        A 403 means the key authenticated but the account lacks the
+        ``usersRead`` permission, so it is still a valid key.
+        """
         try:
-            await self._get("/users/me/api-keys")
+            await self._get("/users")
         except FilcApiError as err:
-            if err.status in (401, 403):
+            if err.status == 401:
                 return False
+            if err.status == 403:
+                return True
             raise
         return True
