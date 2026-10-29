@@ -62,7 +62,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         data.get(CONF_LIVE_ACTIVITY, DEFAULT_LIVE_ACTIVITY),
     )
     notifier.async_setup()
-    entry.async_on_unload(notifier.cancel)
+    entry.async_on_unload(notifier.async_shutdown)
 
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
 

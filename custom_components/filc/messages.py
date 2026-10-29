@@ -79,6 +79,16 @@ def school_state(current, upcoming, today, hu: bool = True) -> str:
     return "Nincs óra" if hu else "No lessons"
 
 
+def nothing_today(current, upcoming, now) -> bool:
+    """True when there is no live activity to show for today.
+
+    ``current`` is the lesson in progress (or ``None``) and ``upcoming`` the
+    next one (or ``None``); ``now`` is a timezone-aware datetime. True when
+    there is no current lesson and no upcoming lesson for the same day.
+    """
+    return current is None and (upcoming is None or upcoming.date != now.date())
+
+
 def live_activity(current, upcoming, now, hu: bool = True) -> dict:
     """Payload fields for a Live Activity / Live Update (no HA imports).
 
