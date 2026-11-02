@@ -19,6 +19,7 @@ import calendar  # noqa: F401 - cache stdlib calendar before the component dir s
 import json
 import sys
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import date, datetime, timedelta
@@ -44,6 +45,15 @@ WEEKDAYS = [
 ]
 
 
+def _items(payload) -> list:
+    """Unwrap a ``{"items": [...]}`` envelope or a bare list."""
+    if isinstance(payload, dict):
+        return payload.get("items") or []
+    if isinstance(payload, list):
+        return payload
+    return []
+
+
 def api_get(base: str, path: str, params: dict | None = None, api_key: str = ""):
     url = base.rstrip("/") + "/api" + path
     if params:
@@ -52,16 +62,19 @@ def api_get(base: str, path: str, params: dict | None = None, api_key: str = "")
     request.add_header("Accept", "application/json")
     if api_key:
         request.add_header("Authorization", f"Bearer {api_key}")
-    with urllib.request.urlopen(request, timeout=15) as response:
-        payload = json.load(response)
-    if not payload.get("success"):
-        raise SystemExit(f"API error for {path}: {payload}")
-    return payload["data"]
+    try:
+        with urllib.request.urlopen(request, timeout=15) as response:
+            payload = json.load(response)
+    except urllib.error.HTTPError as err:
+        raise SystemExit(f"API error for {path}: HTTP {err.code}") from err
+    return payload
 
 
 def resolve_cohort(base: str, name: str) -> tuple[dict, dict]:
     timetable = api_get(base, "/timetable/timetables/latestValid")
-    cohorts = api_get(base, f"/timetable/cohorts/getAllForTimetable/{timetable['id']}")
+    cohorts = _items(
+        api_get(base, f"/timetable/cohorts/getAllForTimetable/{timetable['id']}")
+    )
     wanted = name.strip().lower()
     for cohort in cohorts:
         if cohort["name"].lower() == wanted or cohort["short"].lower() == wanted:
@@ -206,16 +219,22 @@ def main() -> int:
 
     timetable, cohort = resolve_cohort(args.url, args.klass)
 
-    lessons_raw = api_get(
-        args.url,
-        f"/timetable/lessons/getForCohort/{cohort['id']}",
-        {"timetableId": timetable["id"]},
+    lessons_raw = _items(
+        api_get(
+            args.url,
+            f"/timetable/lessons/getForCohort/{cohort['id']}",
+            {"timetableId": timetable["id"]},
+        )
     )
     substitutions = (
         api_get(args.url, f"/timetable/substitutions/cohort/{cohort['id']}") or {}
     ).get("substitutions", [])
-    moved = api_get(args.url, f"/timetable/movedLessons/cohort/{cohort['id']}/relevant")
-    groups = api_get(args.url, f"/timetable/groups/getForCohort/{cohort['id']}")
+    moved = _items(
+        api_get(args.url, f"/timetable/movedLessons/cohort/{cohort['id']}/relevant")
+    )
+    groups = _items(
+        api_get(args.url, f"/timetable/groups/getForCohort/{cohort['id']}")
+    )
 
     selected = resolve_groups(groups, args.groups, args.api_key)
     lessons = [Lesson.from_raw(raw) for raw in lessons_raw]
