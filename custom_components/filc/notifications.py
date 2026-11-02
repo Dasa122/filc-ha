@@ -132,7 +132,7 @@ class FilcNotifier:
         if not self.coordinator.data:
             return
 
-        now = schedule.now()
+        now = schedule.now(self.coordinator.tz)
         current = self.coordinator.current()
         upcoming = self.coordinator.upcoming()
 
@@ -163,7 +163,7 @@ class FilcNotifier:
     async def _update_live_activity(self) -> None:
         """Start, update or end the Live Activity for the current state."""
         async with self._lock:
-            now = schedule.now()
+            now = schedule.now(self.coordinator.tz)
             current = self.coordinator.current()
             upcoming = self.coordinator.upcoming()
 

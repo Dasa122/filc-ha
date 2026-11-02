@@ -41,7 +41,7 @@ async def async_get_config_entry_diagnostics(
     return {
         "entry": async_redact_data(dict(entry.data), TO_REDACT),
         "options": async_redact_data(dict(entry.options), TO_REDACT),
-        "now": schedule.now().isoformat(),
+        "now": schedule.now(coordinator.tz).isoformat(),
         "current": _occurrence(coordinator.current()),
         "upcoming": _occurrence(coordinator.upcoming()),
         "counts": {

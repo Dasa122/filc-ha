@@ -168,12 +168,12 @@ def watch(lessons, selected, moved, substitutions, interval, hu) -> int:
     print(f"Watching the live state every {interval}s (Ctrl-C to stop)...\n", flush=True)
     try:
         while True:
-            now = schedule.now()
+            now = schedule.now(TZ)
             current = schedule.current_occurrence(
-                now, lessons, selected, moved, substitutions
+                now, lessons, selected, moved, substitutions, TZ
             )
             upcoming = schedule.next_occurrence(
-                now, lessons, selected, moved, substitutions
+                now, lessons, selected, moved, substitutions, TZ
             )
             if current is not None:
                 subject = current.lesson.subject or current.lesson.subject_short or "?"
@@ -242,7 +242,7 @@ def main() -> int:
     now = (
         datetime.strptime(args.at, "%Y-%m-%d %H:%M").replace(tzinfo=TZ)
         if args.at
-        else schedule.now()
+        else schedule.now(TZ)
     )
     day = date.fromisoformat(args.date) if args.date else now.date()
 
@@ -251,7 +251,7 @@ def main() -> int:
             lessons, selected, moved, substitutions, args.interval, args.lang == "hu"
         )
 
-    occurrences = schedule.occurrences_for_date(day, lessons, selected, moved, substitutions)
+    occurrences = schedule.occurrences_for_date(day, lessons, selected, moved, substitutions, TZ)
 
     chosen = ", ".join(sorted(g["name"] for g in groups if g["id"] in selected))
     print(f"Filc        : {args.url}  ({timetable['name']})")
@@ -270,8 +270,8 @@ def main() -> int:
         return 0
 
     if now.date() == day:
-        current = schedule.current_occurrence(now, lessons, selected, moved, substitutions)
-        upcoming = schedule.next_occurrence(now, lessons, selected, moved, substitutions)
+        current = schedule.current_occurrence(now, lessons, selected, moved, substitutions, TZ)
+        upcoming = schedule.next_occurrence(now, lessons, selected, moved, substitutions, TZ)
         print("\n--- live actions ---")
         if current is not None:
             subject = current.lesson.subject or current.lesson.subject_short or "?"

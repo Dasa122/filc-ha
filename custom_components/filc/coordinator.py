@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import timedelta
+from datetime import timedelta, tzinfo
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import (
@@ -32,6 +32,7 @@ class FilcDataUpdateCoordinator(DataUpdateCoordinator[ScheduleData]):
         timetable_id: str | None,
         selected_group_ids: list[str] | None,
         scan_interval: int | None,
+        tz: tzinfo,
     ) -> None:
         super().__init__(
             hass,
@@ -47,6 +48,7 @@ class FilcDataUpdateCoordinator(DataUpdateCoordinator[ScheduleData]):
         self.timetable_id = timetable_id
         self.selected_group_ids = set(selected_group_ids or [])
         self.base_url = api.base_url
+        self.tz = tz
 
     async def _async_update_data(self) -> ScheduleData:
         try:
@@ -84,11 +86,12 @@ class FilcDataUpdateCoordinator(DataUpdateCoordinator[ScheduleData]):
         if not data:
             return None
         return schedule.current_occurrence(
-            schedule.now(),
+            schedule.now(self.tz),
             data.lessons,
             data.selected_group_ids,
             data.moved_lessons,
             data.substitutions,
+            self.tz,
         )
 
     def upcoming(self) -> Occurrence | None:
@@ -97,11 +100,12 @@ class FilcDataUpdateCoordinator(DataUpdateCoordinator[ScheduleData]):
         if not data:
             return None
         return schedule.next_occurrence(
-            schedule.now(),
+            schedule.now(self.tz),
             data.lessons,
             data.selected_group_ids,
             data.moved_lessons,
             data.substitutions,
+            self.tz,
         )
 
     def first_lesson_after_day(self) -> Occurrence | None:
@@ -110,6 +114,6 @@ class FilcDataUpdateCoordinator(DataUpdateCoordinator[ScheduleData]):
         if not data:
             return None
         return schedule.first_occurrence_after_day(
-            schedule.now(), data.lessons, data.selected_group_ids,
-            data.moved_lessons, data.substitutions,
+            schedule.now(self.tz), data.lessons, data.selected_group_ids,
+            data.moved_lessons, data.substitutions, self.tz,
         )

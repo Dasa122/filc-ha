@@ -130,13 +130,13 @@ def _fixtures():
 
 def _occurrences(date, selected=()):
     lessons, moved, subs = _fixtures()
-    return schedule.occurrences_for_date(date, lessons, selected, moved, subs)
+    return schedule.occurrences_for_date(date, lessons, selected, moved, subs, TZ)
 
 
 def test_local_date():
-    assert schedule.local_date("2026-09-21T00:00:00.000Z") == dt.date(2026, 9, 21)
+    assert schedule.local_date("2026-09-21T00:00:00.000Z", TZ) == dt.date(2026, 9, 21)
     # 23:30 UTC is 01:30 the next day in Budapest (CEST, +02:00).
-    assert schedule.local_date("2026-09-21T23:30:00.000Z") == dt.date(2026, 9, 22)
+    assert schedule.local_date("2026-09-21T23:30:00.000Z", TZ) == dt.date(2026, 9, 22)
 
 
 def test_lesson_matches_groups():
@@ -194,7 +194,7 @@ def test_substitutions():
 def test_current_occurrence():
     lessons, moved, subs = _fixtures()
     now = dt.datetime(2026, 9, 28, 11, 0, tzinfo=TZ)
-    occ = schedule.current_occurrence(now, lessons, {GROUP_INFO1}, moved, subs)
+    occ = schedule.current_occurrence(now, lessons, {GROUP_INFO1}, moved, subs, TZ)
     assert occ is not None
     assert occ.lesson.id == DIGITALIS_ID
 
@@ -203,8 +203,8 @@ def test_current_break_and_next():
     lessons, moved, subs = _fixtures()
     # 09:00 Monday: break, no current lesson; next is Digitális kultúra at 10:50.
     now = dt.datetime(2026, 9, 28, 9, 0, tzinfo=TZ)
-    assert schedule.current_occurrence(now, lessons, {GROUP_INFO1}, moved, subs) is None
-    nxt = schedule.next_occurrence(now, lessons, {GROUP_INFO1}, moved, subs)
+    assert schedule.current_occurrence(now, lessons, {GROUP_INFO1}, moved, subs, TZ) is None
+    nxt = schedule.next_occurrence(now, lessons, {GROUP_INFO1}, moved, subs, TZ)
     assert nxt is not None
     assert nxt.lesson.id == DIGITALIS_ID
     assert nxt.start == dt.datetime(2026, 9, 28, 10, 50, tzinfo=TZ)
@@ -214,7 +214,7 @@ def test_next_across_week():
     lessons, moved, subs = _fixtures()
     # After the last Monday lesson, the next occurrence is the following Monday.
     now = dt.datetime(2026, 9, 28, 12, 0, tzinfo=TZ)
-    nxt = schedule.next_occurrence(now, lessons, {GROUP_INFO1}, moved, subs)
+    nxt = schedule.next_occurrence(now, lessons, {GROUP_INFO1}, moved, subs, TZ)
     assert nxt is not None
     assert nxt.lesson.id == DIGITALIS_ID
     assert nxt.date == dt.date(2026, 10, 5)
@@ -223,7 +223,7 @@ def test_next_across_week():
 def test_expand_range():
     lessons, moved, subs = _fixtures()
     occs = schedule.expand_range(
-        MONDAY, OTHER_MONDAY, lessons, {GROUP_INFO1}, moved, subs
+        MONDAY, OTHER_MONDAY, lessons, {GROUP_INFO1}, moved, subs, TZ
     )
     # Monday (moved+cancelled+substituted) + next Monday (Digitális only).
     assert [o.lesson.id for o in occs] == [OSZTALYFONOKI_ID, DIGITALIS_ID, DIGITALIS_ID]
@@ -237,10 +237,10 @@ def test_first_occurrence_after_day():
         id="tomorrow", weekday=tomorrow.isoweekday(), period_no=1,
         start="08:00", end="08:45", subject="s", subject_short="s",
     )
-    occ = schedule.first_occurrence_after_day(now, [lesson], set(), [], [])
+    occ = schedule.first_occurrence_after_day(now, [lesson], set(), [], [], TZ)
     assert occ is not None
     assert occ.date == tomorrow
     assert occ.start == dt.datetime(2026, 9, 21, 8, 0, tzinfo=TZ)
 
     # No lessons in range -> None.
-    assert schedule.first_occurrence_after_day(now, [], set(), [], [], max_days=7) is None
+    assert schedule.first_occurrence_after_day(now, [], set(), [], [], TZ, max_days=7) is None
