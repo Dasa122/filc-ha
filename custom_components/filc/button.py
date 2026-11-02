@@ -41,7 +41,7 @@ class FilcTestLiveActionsButton(FilcEntity, ButtonEntity):
         hu = (self.hass.config.language or "en").lower().startswith("hu")
         current = self.coordinator.current()
         upcoming = self.coordinator.upcoming()
-        now = schedule.now()
+        now = schedule.now(self.coordinator.tz)
 
         title, message = live_state(current, upcoming, now.date(), hu)
 

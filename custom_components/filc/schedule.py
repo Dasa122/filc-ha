@@ -3,17 +3,16 @@
 from __future__ import annotations
 
 import datetime as dt
-from zoneinfo import ZoneInfo
 
 try:
-    from .const import SCHOOL_TZ, WEEKDAY_MAP
+    from .const import WEEKDAY_MAP
     from .models import Lesson, Occurrence
 except ImportError:  # pragma: no cover - loaded standalone (tests) as top-level modules
-    from const import SCHOOL_TZ, WEEKDAY_MAP
+    from const import WEEKDAY_MAP
     from models import Lesson, Occurrence
 
 
-def local_date(iso_utc: str, tz: str = SCHOOL_TZ) -> dt.date:
+def local_date(iso_utc: str, tz: dt.tzinfo) -> dt.date:
     """Convert a UTC ISO datetime string to a local date in the school timezone.
 
     Midnight UTC (00:00Z) is 02:00 Budapest, i.e. the same calendar day.
@@ -22,7 +21,7 @@ def local_date(iso_utc: str, tz: str = SCHOOL_TZ) -> dt.date:
     parsed = dt.datetime.fromisoformat(value)
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=dt.timezone.utc)
-    return parsed.astimezone(ZoneInfo(tz)).date()
+    return parsed.astimezone(tz).date()
 
 
 def lesson_matches_groups(lesson: Lesson, selected_group_ids) -> bool:
@@ -46,13 +45,13 @@ def _parse_time(value: str) -> dt.time:
 def _make_occurrence(
     lesson: Lesson,
     date: dt.date,
+    tz: dt.tzinfo,
     start: str | None = None,
     end: str | None = None,
     room: str | None = None,
     teacher: str | None = None,
     moved: bool = False,
 ) -> Occurrence:
-    tz = ZoneInfo(SCHOOL_TZ)
     start_dt = dt.datetime.combine(date, _parse_time(start or lesson.start), tzinfo=tz)
     end_dt = dt.datetime.combine(date, _parse_time(end or lesson.end), tzinfo=tz)
     if room is None:
@@ -91,6 +90,7 @@ def occurrences_for_date(
     selected_group_ids,
     moved_lessons,
     substitutions,
+    tz: dt.tzinfo,
 ) -> list[Occurrence]:
     """Build the ordered list of occurrences for a single date."""
     all_lessons = {lesson.id: lesson for lesson in lessons}
@@ -102,13 +102,13 @@ def occurrences_for_date(
             continue
         if not lesson_matches_groups(lesson, selected_group_ids):
             continue
-        base[lesson.id] = _make_occurrence(lesson, date)
+        base[lesson.id] = _make_occurrence(lesson, date, tz)
 
     # 2. Moved lessons.
     for ml in _iter_moved(moved_lessons):
         if not ml["date"]:
             continue
-        if local_date(ml["date"]) == date:
+        if local_date(ml["date"], tz) == date:
             # Moved TO this date: replace/insert at the target day/period/room.
             period = ml["period"] or {}
             classroom = ml["classroom"] or {}
@@ -119,6 +119,7 @@ def occurrences_for_date(
                 base[lid] = _make_occurrence(
                     lesson,
                     date,
+                    tz,
                     start=period.get("startTime") or lesson.start,
                     end=period.get("endTime") or lesson.end,
                     room=target_room,
@@ -137,7 +138,7 @@ def occurrences_for_date(
         meta = sub.get("substitution") or {}
         if not meta.get("date"):
             continue
-        if local_date(meta["date"]) != date:
+        if local_date(meta["date"], tz) != date:
             continue
         teacher = sub.get("teacher") or {}
         substituter = meta.get("substituter")
@@ -163,11 +164,11 @@ def occurrences_for_date(
     return sorted(base.values(), key=lambda o: o.start)
 
 
-def current_occurrence(now, lessons, selected_group_ids, moved_lessons, substitutions):
+def current_occurrence(now, lessons, selected_group_ids, moved_lessons, substitutions, tz):
     """Return the non-cancelled occurrence currently in progress (last match), else None."""
     result = None
     for occ in occurrences_for_date(
-        now.date(), lessons, selected_group_ids, moved_lessons, substitutions
+        now.date(), lessons, selected_group_ids, moved_lessons, substitutions, tz
     ):
         if occ.cancelled:
             continue
@@ -177,13 +178,13 @@ def current_occurrence(now, lessons, selected_group_ids, moved_lessons, substitu
 
 
 def next_occurrence(
-    now, lessons, selected_group_ids, moved_lessons, substitutions, max_days: int = 14
+    now, lessons, selected_group_ids, moved_lessons, substitutions, tz, max_days: int = 14
 ):
     """Return the first non-cancelled occurrence after `now`, scanning day by day."""
     for offset in range(max_days + 1):
         day = now.date() + dt.timedelta(days=offset)
         for occ in occurrences_for_date(
-            day, lessons, selected_group_ids, moved_lessons, substitutions
+            day, lessons, selected_group_ids, moved_lessons, substitutions, tz
         ):
             if occ.cancelled:
                 continue
@@ -193,13 +194,13 @@ def next_occurrence(
 
 
 def first_occurrence_after_day(
-    now, lessons, selected_group_ids, moved_lessons, substitutions, max_days: int = 14
+    now, lessons, selected_group_ids, moved_lessons, substitutions, tz, max_days: int = 14
 ):
     """First non-cancelled occurrence on the first date AFTER now.date() that has any."""
     for offset in range(1, max_days + 1):
         day = now.date() + dt.timedelta(days=offset)
         for occ in occurrences_for_date(
-            day, lessons, selected_group_ids, moved_lessons, substitutions
+            day, lessons, selected_group_ids, moved_lessons, substitutions, tz
         ):
             if not occ.cancelled:
                 return occ
@@ -213,23 +214,24 @@ def expand_range(
     selected_group_ids,
     moved_lessons,
     substitutions,
+    tz: dt.tzinfo,
 ) -> list[Occurrence]:
     """Return every occurrence (including cancelled) in the inclusive date range."""
     result: list[Occurrence] = []
     day = start_date
     while day <= end_date:
         result.extend(
-            occurrences_for_date(day, lessons, selected_group_ids, moved_lessons, substitutions)
+            occurrences_for_date(day, lessons, selected_group_ids, moved_lessons, substitutions, tz)
         )
         day += dt.timedelta(days=1)
     return result
 
 
-def now() -> dt.datetime:
+def now(tz: dt.tzinfo) -> dt.datetime:
     """Current time in the school timezone."""
-    return dt.datetime.now(ZoneInfo(SCHOOL_TZ))
+    return dt.datetime.now(tz)
 
 
-def today() -> dt.date:
+def today(tz: dt.tzinfo) -> dt.date:
     """Current date in the school timezone."""
-    return now().date()
+    return now(tz).date()

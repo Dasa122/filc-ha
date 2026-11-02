@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.config_entries import ConfigEntry, ConfigEntryNotReady
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.util import dt as dt_util
 
 from .api import FilcApi
 from .const import (
@@ -24,6 +25,7 @@ from .const import (
     DEFAULT_NOTIFY_LEAD,
     DEFAULT_NOTIFY_ON_BREAK,
     DEFAULT_SCAN_INTERVAL,
+    SCHOOL_TZ,
 )
 from .coordinator import FilcDataUpdateCoordinator
 from .notifications import FilcNotifier
@@ -38,6 +40,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     session = async_get_clientsession(hass)
     api = FilcApi(session, data[CONF_BASE_URL], data.get(CONF_API_KEY))
 
+    tz = await dt_util.async_get_time_zone(SCHOOL_TZ)
+    if tz is None:
+        raise ConfigEntryNotReady("Time zone database unavailable")
+
     coordinator = FilcDataUpdateCoordinator(
         hass,
         api,
@@ -46,6 +52,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         data.get(CONF_TIMETABLE_ID),
         data.get(CONF_SELECTED_GROUP_IDS),
         data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
+        tz,
     )
 
     # Raises ConfigEntryNotReady itself when the first refresh fails.

@@ -67,6 +67,7 @@ class FilcCalendar(FilcEntity, CalendarEntity):
             data.selected_group_ids,
             data.moved_lessons,
             data.substitutions,
+            self.coordinator.tz,
         )
         return [
             _to_event(occ)

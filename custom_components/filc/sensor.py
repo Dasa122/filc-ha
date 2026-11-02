@@ -38,7 +38,7 @@ class FilcCurrentLessonSensor(_FilcSensor):
             return current.lesson.subject or current.lesson.subject_short or "Óra"
 
         upcoming = self.coordinator.upcoming()
-        if upcoming and upcoming.date == schedule.today():
+        if upcoming and upcoming.date == schedule.today(self.coordinator.tz):
             return BREAK_STATE
         return None
 
@@ -342,7 +342,7 @@ class FilcSchoolStateSensor(_FilcSensor):
         return messages.school_state(
             self.coordinator.current(),
             self.coordinator.upcoming(),
-            schedule.today(),
+            schedule.today(self.coordinator.tz),
             hu,
         )
 

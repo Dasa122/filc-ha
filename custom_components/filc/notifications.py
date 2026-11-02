@@ -100,7 +100,7 @@ class FilcNotifier:
 
     def _state_key(self) -> str:
         """A key that only changes at lesson boundaries (drives the activity)."""
-        now = schedule.now()
+        now = schedule.now(self.coordinator.tz)
         current = self.coordinator.current()
         upcoming = self.coordinator.upcoming()
         if current is None and (upcoming is None or upcoming.date != now.date()):
@@ -118,7 +118,7 @@ class FilcNotifier:
         if not self.coordinator.data:
             return
 
-        now = schedule.now()
+        now = schedule.now(self.coordinator.tz)
         current = self.coordinator.current()
         upcoming = self.coordinator.upcoming()
 
@@ -146,7 +146,7 @@ class FilcNotifier:
 
     async def _update_live_activity(self) -> None:
         """Start, update or end the Live Activity for the current state."""
-        now = schedule.now()
+        now = schedule.now(self.coordinator.tz)
         current = self.coordinator.current()
         upcoming = self.coordinator.upcoming()
 
