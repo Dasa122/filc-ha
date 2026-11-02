@@ -14,7 +14,13 @@ from models import Lesson, Occurrence  # noqa: E402
 TZ = ZoneInfo("Europe/Budapest")
 
 
-def _occ(room="A118", teacher="Mészáros Tamás", start=(10, 50), end=(11, 35)):
+def _occ(
+    room="A118",
+    teacher="Mészáros Tamás",
+    start=(10, 50),
+    end=(11, 35),
+    date=dt.date(2026, 9, 21),
+):
     lesson = Lesson(
         id="l1",
         weekday=1,
@@ -27,9 +33,9 @@ def _occ(room="A118", teacher="Mészáros Tamás", start=(10, 50), end=(11, 35))
     )
     return Occurrence(
         lesson=lesson,
-        date=dt.date(2026, 9, 21),
-        start=dt.datetime(2026, 9, 21, *start, tzinfo=TZ),
-        end=dt.datetime(2026, 9, 21, *end, tzinfo=TZ),
+        date=date,
+        start=dt.datetime(date.year, date.month, date.day, *start, tzinfo=TZ),
+        end=dt.datetime(date.year, date.month, date.day, *end, tzinfo=TZ),
         room=room,
         teacher=teacher,
         teacher_short="Mészáros",
@@ -160,6 +166,37 @@ def test_live_activity_break_en():
     payload = messages.live_activity(None, occ, now, hu=False)
     assert payload["message"] == "Break\nDigitális kultúra"
     assert payload["critical_text"] == "A118 · Mészáros"
+
+
+def test_nothing_today_in_lesson():
+    occ = _occ()
+    now = dt.datetime(2026, 9, 21, 11, 0, tzinfo=TZ)
+    assert messages.nothing_today(occ, None, now) is False
+    assert messages.nothing_today(occ, occ, now) is False
+
+
+def test_nothing_today_break_today():
+    occ = _occ()
+    now = dt.datetime(2026, 9, 21, 9, 0, tzinfo=TZ)
+    assert messages.nothing_today(None, occ, now) is False
+
+
+def test_nothing_today_after_last_lesson():
+    # Next lesson is tomorrow, so nothing is left today.
+    tomorrow = _occ(date=dt.date(2026, 9, 22))
+    now = dt.datetime(2026, 9, 21, 20, 0, tzinfo=TZ)
+    assert messages.nothing_today(None, tomorrow, now) is True
+
+
+def test_nothing_today_no_lessons():
+    now = dt.datetime(2026, 9, 21, 8, 0, tzinfo=TZ)
+    assert messages.nothing_today(None, None, now) is True
+
+
+def test_nothing_today_upcoming_other_date():
+    occ = _occ(date=dt.date(2026, 9, 28))
+    now = dt.datetime(2026, 9, 27, 12, 0, tzinfo=TZ)
+    assert messages.nothing_today(None, occ, now) is True
 
 
 def test_school_state_in_lesson():
