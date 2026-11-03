@@ -162,10 +162,11 @@ for several phones) and
 ### See it inside the integration
 
 - **Sensors / entities** — *Settings → Devices & Services → Filc → click the class*. Every entity
-  (`current_lesson`, `next_lesson`, the two timestamp countdown sensors, `in_lesson`, the calendar
-  and the button) is listed there, under one device per class.
+  (`current_lesson`, `next_lesson`, the two timestamp countdown sensors, `in_lesson`, the calendar,
+  the button and the switch) is listed there, under one device per class.
+- **Live activity switch** — `switch.filc_<class>_live_activity` turns the Live Activity on or off.
 - **Test live actions button** — press `button.filc_<class>_test_live_actions` to send the *current*
-  live action to the selected phone and to the Home Assistant notification area. Handy to verify
+  live action to the selected phone. Handy to verify
   the phone target and the message text without waiting for a lesson.
   Pressing it starts a **Live Activity** (iOS) / **Live Update** (Android) on the
   selected phone. The header is always `Filc`; the companion app hides the main

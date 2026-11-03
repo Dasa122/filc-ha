@@ -108,6 +108,11 @@
       "test_live_actions": {
         "name": "Test live actions"
       }
+    },
+    "switch": {
+      "live_activity": {
+        "name": "Live activity"
+      }
     }
   }
 }

@@ -108,6 +108,11 @@
       "test_live_actions": {
         "name": "Élő állapot teszt"
       }
+    },
+    "switch": {
+      "live_activity": {
+        "name": "Élő aktivitás"
+      }
     }
   }
 }

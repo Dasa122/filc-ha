@@ -9,7 +9,7 @@ import ast
 from pathlib import Path
 
 COMPONENT = Path(__file__).resolve().parents[1] / "custom_components" / "filc"
-PLATFORMS = ["calendar.py", "sensor.py", "binary_sensor.py", "button.py"]
+PLATFORMS = ["calendar.py", "sensor.py", "binary_sensor.py", "button.py", "switch.py"]
 
 
 def _defines_async_setup_entry(path: Path) -> bool:

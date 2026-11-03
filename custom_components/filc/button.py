@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 from homeassistant.components.button import ButtonEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -11,8 +13,10 @@ from . import schedule
 from .const import CONF_NOTIFY_SERVICE
 from .coordinator import FilcDataUpdateCoordinator
 from .entity import FilcEntity
-from .messages import live_activity, live_state
+from .messages import live_activity
 from .notifications import activity_notify_data
+
+_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
@@ -26,7 +30,7 @@ async def async_setup_entry(
 
 
 class FilcTestLiveActionsButton(FilcEntity, ButtonEntity):
-    """Send the current live action to the selected phone and to the UI."""
+    """Send the current live action to the selected phone."""
 
     _attr_translation_key = "test_live_actions"
     _attr_icon = "mdi:bell-ring-outline"
@@ -43,31 +47,21 @@ class FilcTestLiveActionsButton(FilcEntity, ButtonEntity):
         upcoming = self.coordinator.upcoming()
         now = schedule.now(self.coordinator.tz)
 
-        title, message = live_state(current, upcoming, now.date(), hu)
-
         service = data.get(CONF_NOTIFY_SERVICE)
-        if service:
-            payload = live_activity(current, upcoming, now, hu)
-            await self.hass.services.async_call(
-                "notify",
-                service,
-                {
-                    "title": payload["title"],
-                    "message": payload["message"],
-                    "data": activity_notify_data(
-                        payload, f"filc_{self.coordinator.cohort_id}"
-                    ),
-                },
-                blocking=False,
-            )
+        if not service:
+            _LOGGER.warning("No notification phone configured; cannot send the live action")
+            return
 
+        payload = live_activity(current, upcoming, now, hu)
         await self.hass.services.async_call(
-            "persistent_notification",
-            "create",
+            "notify",
+            service,
             {
-                "title": title,
-                "message": message,
-                "notification_id": f"filc_{self.coordinator.cohort_id}",
+                "title": payload["title"],
+                "message": payload["message"],
+                "data": activity_notify_data(
+                    payload, f"filc_{self.coordinator.cohort_id}"
+                ),
             },
             blocking=False,
         )

@@ -30,7 +30,13 @@ from .const import (
 from .coordinator import FilcDataUpdateCoordinator
 from .notifications import FilcNotifier
 
-PLATFORMS = [Platform.CALENDAR, Platform.SENSOR, Platform.BINARY_SENSOR, Platform.BUTTON]
+PLATFORMS = [
+    Platform.CALENDAR,
+    Platform.SENSOR,
+    Platform.BINARY_SENSOR,
+    Platform.BUTTON,
+    Platform.SWITCH,
+]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
