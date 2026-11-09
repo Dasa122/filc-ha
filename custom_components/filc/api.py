@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from typing import Any
+from urllib.parse import quote
 
 import aiohttp
 
@@ -21,6 +22,12 @@ def _items(payload: Any) -> list:
     if isinstance(payload, list):
         return payload
     return []
+
+
+def parse_door_target(target: str) -> tuple[str, str]:
+    """Split a stored ``cardId|deviceId`` door target."""
+    card_id, _, device_id = (target or "").partition("|")
+    return card_id, device_id
 
 
 class FilcApiError(Exception):
@@ -79,6 +86,38 @@ class FilcApi:
             raise FilcApiError(f"Connection error: {err}") from err
 
         return payload
+
+    async def _post(self, path: str, payload: dict[str, Any]) -> Any:
+        try:
+            async with self._session.post(
+                self._url(path),
+                headers=self._headers(),
+                json=payload,
+                timeout=TIMEOUT,
+            ) as resp:
+                if resp.status in (401, 403):
+                    raise FilcApiError("Unauthorized", resp.status)
+                if resp.status >= 400:
+                    detail = ""
+                    try:
+                        body = await resp.json()
+                    except ValueError:
+                        body = None
+                    if isinstance(body, dict):
+                        detail = ": ".join(
+                            str(part)
+                            for part in (body.get("code"), body.get("message"))
+                            if part
+                        )
+                    raise FilcApiError(
+                        detail or f"HTTP {resp.status} for {path}", resp.status
+                    )
+                try:
+                    return await resp.json()
+                except ValueError:
+                    return None
+        except aiohttp.ClientError as err:
+            raise FilcApiError(f"Connection error: {err}") from err
 
     async def ping(self) -> Any:
         """Health check."""
@@ -141,3 +180,16 @@ class FilcApi:
                 return True
             raise
         return True
+
+    async def cards(self) -> list[dict]:
+        """Return the door cards owned by the API-key user."""
+        return _items(await self._get("/doorlock/self/cards"))
+
+    async def activate_card(
+        self, card_id: str, device_id: str | None = None
+    ) -> Any:
+        """Publish an unlock request for one of the user's cards."""
+        payload = {"deviceId": device_id} if device_id else {}
+        return await self._post(
+            f"/doorlock/self/cards/{quote(card_id, safe='')}/activate", payload
+        )

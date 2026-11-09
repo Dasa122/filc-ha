@@ -17,6 +17,7 @@ from .const import (
     CONF_BASE_URL,
     CONF_COHORT_ID,
     CONF_COHORT_NAME,
+    CONF_DOOR_TARGET,
     CONF_LIVE_ACTIVITY,
     CONF_NOTIFY_LEAD,
     CONF_NOTIFY_ON_BREAK,
@@ -108,6 +109,37 @@ def _notify_options(hass: HomeAssistant) -> list:
             continue
         label = name.removeprefix("mobile_app_").replace("_", " ").title()
         options.append(selector.SelectOptionDict(value=name, label=label))
+    return options
+
+
+def _door_options(cards: list[dict], current: str) -> list:
+    """Build the card/reader dropdown, keeping an unknown current value."""
+    options = [selector.SelectOptionDict(value="", label="(kikapcsolva)")]
+    for card in cards or []:
+        card_id = card.get("id")
+        if not card_id:
+            continue
+        card_name = card.get("name") or card_id
+        devices = [
+            device
+            for device in card.get("authorizedDevices") or []
+            if device.get("id")
+        ]
+        if not devices:
+            options.append(
+                selector.SelectOptionDict(value=card_id, label=card_name)
+            )
+            continue
+        for device in devices:
+            device_name = device.get("name") or device["id"]
+            options.append(
+                selector.SelectOptionDict(
+                    value=f"{card_id}|{device['id']}",
+                    label=f"{card_name} → {device_name}",
+                )
+            )
+    if current and not any(option["value"] == current for option in options):
+        options.append(selector.SelectOptionDict(value=current, label=current))
     return options
 
 
@@ -275,6 +307,7 @@ class FilcOptionsFlow(config_entries.OptionsFlow):
     _notify_lead: int = DEFAULT_NOTIFY_LEAD
     _notify_on_break: bool = DEFAULT_NOTIFY_ON_BREAK
     _live_activity: bool = DEFAULT_LIVE_ACTIVITY
+    _door_target: str = ""
 
     async def async_step_init(self, user_input=None):
         entry = self.config_entry
@@ -292,6 +325,12 @@ class FilcOptionsFlow(config_entries.OptionsFlow):
         self._api = api
         self._cohorts = {c["id"]: c["name"] for c in cohorts}
 
+        try:
+            cards = await api.cards()
+        except FilcApiError as err:
+            _LOGGER.debug("Door cards unavailable: %s", err)
+            cards = []
+
         if user_input is not None:
             self._cohort_id = user_input[CONF_COHORT_ID]
             self._cohort_name = self._cohorts.get(self._cohort_id, "Filc")
@@ -304,6 +343,7 @@ class FilcOptionsFlow(config_entries.OptionsFlow):
             self._live_activity = user_input.get(
                 CONF_LIVE_ACTIVITY, DEFAULT_LIVE_ACTIVITY
             )
+            self._door_target = user_input.get(CONF_DOOR_TARGET) or ""
             return await self.async_step_groups()
 
         options = [
@@ -339,6 +379,17 @@ class FilcOptionsFlow(config_entries.OptionsFlow):
                 ): selector.SelectSelector(
                     selector.SelectSelectorConfig(
                         options=notify_options,
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                ),
+                vol.Optional(
+                    CONF_DOOR_TARGET,
+                    default=data.get(CONF_DOOR_TARGET, ""),
+                ): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=_door_options(
+                            cards, data.get(CONF_DOOR_TARGET, "")
+                        ),
                         mode=selector.SelectSelectorMode.DROPDOWN,
                     )
                 ),
@@ -398,5 +449,6 @@ class FilcOptionsFlow(config_entries.OptionsFlow):
                 CONF_NOTIFY_LEAD: self._notify_lead,
                 CONF_NOTIFY_ON_BREAK: self._notify_on_break,
                 CONF_LIVE_ACTIVITY: self._live_activity,
+                CONF_DOOR_TARGET: self._door_target,
             },
         )

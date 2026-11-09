@@ -91,6 +91,7 @@ integration still works — you simply pick your groups by hand.
 | `sensor.filc_<class>_school_state` | `Óra` / `Szünet` / `Nincs több óra ma` / `Nincs óra` |
 | `sensor.filc_<class>_next_day_first_lesson` | Timestamp of the first lesson on the next school day |
 | `binary_sensor.filc_in_lesson` | On during a lesson |
+| `button.filc_<class>_open_door` | Unlocks the door card selected in Configure |
 
 Entity ids depend on your class (e.g. `sensor.filc_9a_current_lesson`).
 
@@ -154,6 +155,11 @@ currently sent.
 
 Leave the dropdown on *(kikapcsolva)/(disabled)* to turn notifications off. This
 works on both iPhone and Android and needs no automation.
+
+The **Door card** option in the same dialog lists your Filc door cards and their
+authorised readers; `button.filc_<class>_open_door` publishes an unlock request for the
+selected card and reader. It needs an API key. Filc logs the request, and a 2xx
+response means the request was published — not that the door physically opened.
 
 Prefer automations? The same entities drive them — see
 [`examples/automation_next_lesson.yaml`](examples/automation_next_lesson.yaml)
