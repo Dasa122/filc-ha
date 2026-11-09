@@ -47,7 +47,8 @@
           "notify_service": "Értesítési telefon",
           "notify_lead": "Emlékeztető az óra előtt (perc)",
           "notify_on_break": "Szünet értesítés (következő óra + terem)",
-          "live_activity": "Élő aktivitás (élő állapot a zárolási képernyőn)"
+          "live_activity": "Élő aktivitás (élő állapot a zárolási képernyőn)",
+          "door_target": "Ajtó kártya"
         }
       },
       "groups": {
@@ -114,6 +115,9 @@
     "button": {
       "test_live_actions": {
         "name": "Élő állapot teszt"
+      },
+      "open_door": {
+        "name": "Ajtó nyitása"
       }
     },
     "switch": {

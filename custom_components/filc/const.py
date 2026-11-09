@@ -33,6 +33,7 @@ CONF_NOTIFY_SERVICE = "notify_service"
 CONF_NOTIFY_LEAD = "notify_lead"
 CONF_NOTIFY_ON_BREAK = "notify_on_break"
 CONF_LIVE_ACTIVITY = "live_activity"
+CONF_DOOR_TARGET = "door_target"
 
 DEFAULT_NOTIFY_LEAD = 5
 DEFAULT_NOTIFY_ON_BREAK = True

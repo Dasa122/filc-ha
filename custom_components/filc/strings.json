@@ -47,7 +47,8 @@
           "notify_service": "Notification phone",
           "notify_lead": "Reminder before lesson (minutes)",
           "notify_on_break": "Send break summary (next lesson + room)",
-          "live_activity": "Maintain a Live Activity (live actions on the Lock Screen)"
+          "live_activity": "Maintain a Live Activity (live actions on the Lock Screen)",
+          "door_target": "Door card"
         }
       },
       "groups": {
@@ -114,6 +115,9 @@
     "button": {
       "test_live_actions": {
         "name": "Test live actions"
+      },
+      "open_door": {
+        "name": "Open door"
       }
     },
     "switch": {
