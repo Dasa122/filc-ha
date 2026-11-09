@@ -18,6 +18,13 @@
       "groups": {
         "title": "Csoportok kiválasztása",
         "description": "Válassz egy csoportot minden bontáshoz (pl. angol, tesi). A Filcben kiválasztott csoportok előre bejelölve."
+      },
+      "notify": {
+        "title": "Értesítési telefon",
+        "description": "Válaszd ki a telefont, amelyen az élő aktivitás megjelenjen. Opcionális — később a beállításokban módosítható.",
+        "data": {
+          "notify_service": "Értesítési telefon"
+        }
       }
     },
     "error": {
