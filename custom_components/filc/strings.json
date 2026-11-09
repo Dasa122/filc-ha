@@ -18,6 +18,13 @@
       "groups": {
         "title": "Select your groups",
         "description": "Pick one group per split (e.g. English, PE). Groups marked as selected in Filc are pre-chosen."
+      },
+      "notify": {
+        "title": "Notification phone",
+        "description": "Pick the phone that should show the Live Activity. Optional — you can change it later in the options.",
+        "data": {
+          "notify_service": "Notification phone"
+        }
       }
     },
     "error": {

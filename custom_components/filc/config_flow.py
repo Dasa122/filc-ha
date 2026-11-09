@@ -6,6 +6,7 @@ import logging
 
 import voluptuous as vol
 from homeassistant import config_entries
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.util import slugify
@@ -98,6 +99,18 @@ def _picked_groups(divisions: dict[str, dict], user_input: dict) -> list[str]:
     return picked
 
 
+def _notify_options(hass: HomeAssistant) -> list:
+    """List the phone notification targets (companion app services)."""
+    services = hass.services.async_services().get("notify", {})
+    options = [selector.SelectOptionDict(value="", label="(kikapcsolva)")]
+    for name in sorted(services):
+        if not name.startswith("mobile_app_"):
+            continue
+        label = name.removeprefix("mobile_app_").replace("_", " ").title()
+        options.append(selector.SelectOptionDict(value=name, label=label))
+    return options
+
+
 class FilcConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle the initial setup of a Filc class."""
 
@@ -111,6 +124,8 @@ class FilcConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._cohort_id: str | None = None
         self._cohort_name: str | None = None
         self._cohorts: dict[str, str] = {}
+        self._selected_group_ids: list[str] = []
+        self._notify_service: str | None = None
 
     async def async_step_user(self, user_input=None):
         errors: dict[str, str] = {}
@@ -188,10 +203,12 @@ class FilcConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         divisions = _divisions(groups)
         if not divisions:
-            return self._create_entry([])
+            self._selected_group_ids = []
+            return await self.async_step_notify()
 
         if user_input is not None:
-            return self._create_entry(_picked_groups(divisions, user_input))
+            self._selected_group_ids = _picked_groups(divisions, user_input)
+            return await self.async_step_notify()
 
         selected = {g["id"] for g in groups if g.get("selected")}
         return self.async_show_form(
@@ -199,7 +216,34 @@ class FilcConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=_group_schema(divisions, selected),
         )
 
-    def _create_entry(self, selected_group_ids: list[str]):
+    async def async_step_notify(self, user_input=None):
+        """Pick the phone that should receive the Live Activity."""
+        options = _notify_options(self.hass)
+        # Only the "(disabled)" entry means no companion app has registered yet.
+        if len(options) < 2:
+            return self._create_entry()
+
+        if user_input is not None:
+            self._notify_service = user_input.get(CONF_NOTIFY_SERVICE) or None
+            return self._create_entry()
+
+        return self.async_show_form(
+            step_id="notify",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(
+                        CONF_NOTIFY_SERVICE, default=""
+                    ): selector.SelectSelector(
+                        selector.SelectSelectorConfig(
+                            options=options,
+                            mode=selector.SelectSelectorMode.DROPDOWN,
+                        )
+                    )
+                }
+            ),
+        )
+
+    def _create_entry(self):
         return self.async_create_entry(
             title=self._cohort_name or "Filc",
             data={
@@ -208,7 +252,8 @@ class FilcConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_COHORT_ID: self._cohort_id,
                 CONF_COHORT_NAME: self._cohort_name,
                 CONF_TIMETABLE_ID: (self._timetable or {}).get("id"),
-                CONF_SELECTED_GROUP_IDS: selected_group_ids,
+                CONF_SELECTED_GROUP_IDS: self._selected_group_ids,
+                CONF_NOTIFY_SERVICE: self._notify_service or "",
             },
         )
 
@@ -265,7 +310,7 @@ class FilcOptionsFlow(config_entries.OptionsFlow):
             selector.SelectOptionDict(value=c["id"], label=c["name"])
             for c in cohorts
         ]
-        notify_options = self._notify_options()
+        notify_options = _notify_options(self.hass)
         schema = vol.Schema(
             {
                 vol.Required(
@@ -339,17 +384,6 @@ class FilcOptionsFlow(config_entries.OptionsFlow):
         return self.async_show_form(
             step_id="groups", data_schema=_group_schema(divisions, current)
         )
-
-    def _notify_options(self) -> list:
-        """List the phone notification targets (companion app services)."""
-        services = self.hass.services.async_services().get("notify", {})
-        options = [selector.SelectOptionDict(value="", label="(kikapcsolva)")]
-        for name in sorted(services):
-            if not name.startswith("mobile_app_"):
-                continue
-            label = name.removeprefix("mobile_app_").replace("_", " ").title()
-            options.append(selector.SelectOptionDict(value=name, label=label))
-        return options
 
     def _save(self, selected_group_ids: list[str]):
         return self.async_create_entry(

@@ -47,6 +47,8 @@ directory and restart.
    the groups you selected in the live Filc app.
 4. **Class** — pick your class from the list.
 5. **Groups** — pick one group per split (e.g. *angol*, *tesi*, *info*).
+6. **Notification phone (optional)** — pick the phone that should show the Live Activity.
+   You can change it later under *Configure*.
 
 ### Creating an API key (optional)
 
