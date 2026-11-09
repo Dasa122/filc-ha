@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Tests and syntax
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Run pure-python tests
+        run: uvx pytest tests/ -q
+
+      - name: Compile every module
+        run: python -m compileall -q custom_components tests tools
+
+      - name: Validate JSON files
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          files = [Path("hacs.json")]
+          files += sorted(Path("custom_components/filc").glob("*.json"))
+          files += sorted(Path("custom_components/filc/translations").glob("*.json"))
+          for path in files:
+              json.loads(path.read_text(encoding="utf-8"))
+          print(f"validated {len(files)} JSON files")
+          PY
+
+      - name: Ruff syntax and undefined-name check
+        run: uvx ruff check --select E9,F63,F7,F82 custom_components tests tools
