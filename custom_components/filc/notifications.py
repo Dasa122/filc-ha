@@ -156,7 +156,7 @@ class FilcNotifier:
     def _schedule_point(self, when, action) -> None:
         @callback
         def _fire(_now=None) -> None:
-            self.hass.async_create_task(action())
+            action()
 
         self._unsubs.append(async_track_point_in_time(self.hass, _fire, when))
 
